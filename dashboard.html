@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copilot CLI usage</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb;
+  --text: #0b0b0b; --text-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10);
+  --premium: #2a78d6; --standard: #eb6834; --light: #1baf7a;
+  --live: #0ca30c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19;
+    --text: #fff; --text-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10);
+    --premium: #3987e5; --standard: #d95926; --light: #199e70;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+h1 { font-size: 20px; margin: 0; font-weight: 600; }
+h2 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
+.sub { color: var(--text-2); font-size: 13px; margin: 0 0 12px; }
+.status { color: var(--text-2); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--live); animation: pulse 2s infinite; }
+.status.stale .pulse { background: var(--muted); animation: none; }
+@keyframes pulse { 50% { opacity: .35; } }
+
+.filters { display: flex; gap: 4px; margin: 20px 0 16px; flex-wrap: wrap; }
+.filters button { font: inherit; color: var(--text-2); background: none; border: 1px solid transparent;
+  border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+.filters button:hover { background: var(--border); }
+.filters button[aria-pressed=true] { color: var(--text); background: var(--surface); border-color: var(--border); font-weight: 600; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.kpis { display: grid; grid-template-columns: 1.4fr 1.4fr 1fr 1fr; gap: 12px; }
+.kpi .label { color: var(--text-2); font-size: 13px; }
+.kpi .value { font-size: 28px; font-weight: 600; line-height: 1.2; margin-top: 4px; }
+.kpi.hero .value { font-size: 48px; line-height: 1.1; }
+.kpi .note { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.split { display: flex; gap: 2px; height: 8px; margin-top: 12px; }
+.split span { border-radius: 2px; min-width: 0; }
+
+.grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; margin-top: 12px; }
+.stack { display: grid; gap: 12px; margin-top: 12px; }
+@media (max-width: 820px) { .kpis { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+
+.legend { display: flex; gap: 16px; color: var(--text-2); font-size: 13px; margin-bottom: 8px; flex-wrap: wrap; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+svg { display: block; width: 100%; overflow: visible; }
+svg text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+svg text.val { fill: var(--text-2); }
+svg text.name { fill: var(--text); font-size: 12px; }
+.chart { position: relative; }
+.hit { fill: transparent; }
+.hit:hover, .hit:focus { fill: var(--border); outline: none; }
+
+#tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.18);
+  display: none; min-width: 150px; z-index: 10; }
+#tip .head { color: var(--text-2); margin-bottom: 4px; }
+#tip .row { display: flex; align-items: center; gap: 8px; }
+#tip .key { width: 12px; height: 2px; border-radius: 1px; }
+#tip b { font-variant-numeric: tabular-nums; }
+#tip .row span:last-child { color: var(--text-2); }
+
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { color: var(--text-2); font-weight: 500; font-size: 12px; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+tr:last-child td { border-bottom: 0; }
+td.tier { color: var(--text-2); }
+.scroll { overflow-x: auto; }
+.empty { color: var(--muted); padding: 24px 0; text-align: center; }
+.sessions { display: grid; gap: 10px; }
+.session { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; }
+.session .meta { color: var(--text-2); font-size: 12px; grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session .aic { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.session .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Copilot CLI usage</h1>
+    <div class="status" id="status"><span class="pulse"></span><span id="updated">Loading</span></div>
+  </header>
+
+  <div class="filters" id="filters" role="group" aria-label="Date range"></div>
+
+  <section class="kpis">
+    <div class="card kpi hero"><div class="label">Spend</div><div class="value" id="k-spend">-</div><div class="note" id="k-spend-note"></div></div>
+    <div class="card kpi"><div class="label">Premium share of spend</div><div class="value" id="k-share">-</div><div class="note" id="k-share-note"></div><div class="split" id="k-split"></div></div>
+    <div class="card kpi"><div class="label">Model calls</div><div class="value" id="k-calls">-</div><div class="note" id="k-calls-note"></div></div>
+    <div class="card kpi"><div class="label">AIC per call</div><div class="value" id="k-rate">-</div><div class="note" id="k-rate-note"></div></div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Daily spend by tier</h2>
+      <p class="sub">AI credits per day. 1 AIC = $0.01.</p>
+      <div class="legend" id="legend"></div>
+      <div class="chart" id="daily"></div>
+    </div>
+    <div class="card">
+      <h2>Spend by model</h2>
+      <p class="sub">AI credits, colored by tier.</p>
+      <div class="chart" id="models"></div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Open sessions</h2>
+      <p class="sub">Running Copilot CLI sessions and what each has spent so far.</p>
+      <div class="sessions" id="sessions"></div>
+    </div>
+    <div class="card">
+      <h2>Models</h2>
+      <p class="sub">Calls and tokens are recorded when a session closes, so open sessions show spend only.</p>
+      <div class="scroll"><table id="table"></table></div>
+    </div>
+  </section>
+</main>
+<div id="tip"></div>
+
+<script>
+const TIERS = ["premium", "standard", "light"];
+const TIER_LABEL = { premium: "Premium", standard: "Standard", light: "Light" };
+const RANGES = [
+  { id: "today", label: "Today", start: now => now },
+  { id: "7d", label: "Last 7 days", start: now => addDays(now, -6) },
+  { id: "30d", label: "Last 30 days", start: now => addDays(now, -29) },
+  { id: "month", label: "This month", start: now => new Date(now.getFullYear(), now.getMonth(), 1) },
+  { id: "all", label: "All time", start: () => null },
+];
+const SVG = "http://www.w3.org/2000/svg";
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const usd = aic => "$" + (aic / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const pct = x => Math.round(x * 100) + "%";
+const css = name => `var(--${name})`;
+
+let payload = null, fingerprint = "", range = "month";
+try { range = localStorage.getItem("range") || range; } catch {}
+
+function addDays(date, n) { const d = new Date(date); d.setDate(d.getDate() + n); return d; }
+function iso(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
+function parseDay(day) { const [y, m, d] = day.split("-").map(Number); return new Date(y, m - 1, d); }
+function shortDay(day) { return parseDay(day).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
+
+function el(tag, attrs = {}, text) {
+  const node = tag === "svg" || attrs.svg ? document.createElementNS(SVG, tag) : document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) if (k !== "svg") node.setAttribute(k, v);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+const s = (tag, attrs, text) => el(tag, { ...attrs, svg: 1 }, text);
+
+function sliceRows() {
+  const today = new Date();
+  const startDate = RANGES.find(r => r.id === range).start(today);
+  const firstDay = payload.rows.length ? payload.rows[0].day : iso(today);
+  const start = startDate ? iso(startDate) : firstDay;
+  const rows = payload.rows.filter(r => r.day >= start);
+  const days = [];
+  for (let d = parseDay(start); iso(d) <= iso(today); d = addDays(d, 1)) days.push(iso(d));
+  return { rows, days };
+}
+
+function sumBy(rows, keyOf) {
+  const out = new Map();
+  for (const r of rows) {
+    const key = keyOf(r);
+    const acc = out.get(key) || { aic: 0, calls: 0, in: 0, out: 0, cache: 0, tier: r.tier };
+    for (const f of ["aic", "calls", "in", "out", "cache"]) acc[f] += r[f];
+    out.set(key, acc);
+  }
+  return out;
+}
+
+function niceMax(value) {
+  if (value <= 0) return 1;
+  const pow = 10 ** Math.floor(Math.log10(value));
+  return [1, 2, 2.5, 5, 10].map(m => m * pow).find(v => v >= value);
+}
+
+const tip = document.getElementById("tip");
+function showTip(evt, head, lines) {
+  tip.replaceChildren(el("div", { class: "head" }, head));
+  for (const { color, value, label } of lines) {
+    const row = el("div", { class: "row" });
+    const key = el("span", { class: "key" }); key.style.background = color;
+    row.append(key, el("b", {}, value), el("span", {}, label));
+    tip.append(row);
+  }
+  tip.style.display = "block";
+  const box = evt.target.getBoundingClientRect();
+  const x = evt.clientX || box.right, y = evt.clientY || box.top;
+  tip.style.left = Math.min(x + 14, innerWidth - tip.offsetWidth - 8) + "px";
+  tip.style.top = Math.max(8, y - tip.offsetHeight - 10) + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+function hoverable(node, head, lines) {
+  node.setAttribute("tabindex", "0");
+  node.addEventListener("pointermove", e => showTip(e, head, lines));
+  node.addEventListener("focus", e => showTip(e, head, lines));
+  node.addEventListener("pointerleave", hideTip);
+  node.addEventListener("blur", hideTip);
+}
+
+function roundedTop(x, y, w, h, r) {
+  r = Math.min(r, h, w / 2);
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+function roundedRight(x, y, w, h, r) {
+  r = Math.min(r, w, h / 2);
+  return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+}
+
+function renderDaily(rows, days) {
+  const host = document.getElementById("daily");
+  const W = host.clientWidth || 600, H = 260;
+  const m = { top: 8, right: 8, bottom: 24, left: 44 };
+  const plotW = W - m.left - m.right, plotH = H - m.top - m.bottom;
+  const byDay = new Map(days.map(d => [d, { premium: 0, standard: 0, light: 0 }]));
+  for (const r of rows) if (byDay.has(r.day)) byDay.get(r.day)[r.tier] += r.aic;
+  for (const v of byDay.values()) for (const t of TIERS) v[t] = Math.max(0, v[t]);
+
+  const top = niceMax(Math.max(...[...byDay.values()].map(v => v.premium + v.standard + v.light)));
+  const y = v => m.top + plotH - (v / top) * plotH;
+  const slot = plotW / days.length;
+  const barW = Math.max(2, Math.min(24, slot - 2));
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Daily spend by tier" });
+
+  for (let i = 0; i <= 4; i++) {
+    const v = (top / 4) * i;
+    svg.append(s("line", { x1: m.left, x2: W - m.right, y1: y(v), y2: y(v), stroke: i ? css("grid") : css("axis") }));
+    svg.append(s("text", { x: m.left - 8, y: y(v) + 4, "text-anchor": "end" }, fmt(v)));
+  }
+
+  const labelEvery = Math.ceil(days.length / Math.max(1, Math.floor(plotW / 70)));
+  days.forEach((day, i) => {
+    const cx = m.left + slot * i + slot / 2, x = cx - barW / 2;
+    const values = byDay.get(day);
+    const present = TIERS.filter(t => values[t] > 0);
+    let base = 0;
+    present.forEach((tier, idx) => {
+      const y1 = y(base + values[tier]), y0 = y(base) - (idx ? 2 : 0);
+      const h = Math.max(1, y0 - y1);
+      const isTop = idx === present.length - 1;
+      svg.append(s("path", { d: roundedTop(x, y1, barW, h, isTop ? 4 : 0), fill: css(tier) }));
+      base += values[tier];
+    });
+    if (i % labelEvery === 0) svg.append(s("text", { x: cx, y: H - 6, "text-anchor": "middle" }, shortDay(day)));
+
+    const hit = s("rect", { class: "hit", x: m.left + slot * i, y: m.top, width: slot, height: plotH });
+    hoverable(hit, `${shortDay(day)} · ${fmt(base)} AIC`,
+      TIERS.map(t => ({ color: css(t), value: fmt(values[t]), label: TIER_LABEL[t] })));
+    svg.append(hit);
+  });
+  host.replaceChildren(svg);
+}
+
+function renderModels(byModel) {
+  const host = document.getElementById("models");
+  const ranked = [...byModel].filter(([, v]) => v.aic > 0.5).sort((a, b) => b[1].aic - a[1].aic);
+  if (!ranked.length) return host.replaceChildren(el("div", { class: "empty" }, "No spend in this range"));
+  const shown = ranked.slice(0, 8);
+  const W = host.clientWidth || 360, rowH = 40, H = shown.length * rowH;
+  const max = shown[0][1].aic, valueRoom = 56;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by model" });
+  shown.forEach(([model, v], i) => {
+    const y0 = i * rowH, w = Math.max(2, (v.aic / max) * (W - valueRoom));
+    svg.append(s("text", { class: "name", x: 0, y: y0 + 13 }, model));
+    svg.append(s("path", { d: roundedRight(0, y0 + 19, w, 12, 4), fill: css(v.tier) }));
+    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 29 }, fmt(v.aic)));
+    const hit = s("rect", { class: "hit", x: 0, y: y0, width: W, height: rowH - 2, rx: 4 });
+    hoverable(hit, model, [
+      { color: css(v.tier), value: fmt(v.aic) + " AIC", label: TIER_LABEL[v.tier] },
+      { color: "transparent", value: fmt(v.calls), label: "calls" },
+    ]);
+    svg.append(hit);
+  });
+  host.replaceChildren(svg);
+  if (ranked.length > shown.length)
+    host.append(el("p", { class: "sub" }, `${ranked.length - shown.length} smaller models are in the table below.`));
+}
+
+function renderKpis(rows, byTier) {
+  const total = rows.reduce((a, r) => a + r.aic, 0);
+  const calls = rows.reduce((a, r) => a + r.calls, 0);
+  const closedAic = rows.filter(r => r.calls > 0).reduce((a, r) => a + r.aic, 0);
+  const tierAic = t => Math.max(0, byTier.get(t)?.aic || 0);
+  const tierCalls = t => byTier.get(t)?.calls || 0;
+  const share = total > 0 ? tierAic("premium") / total : 0;
+
+  document.getElementById("k-spend").textContent = fmt(total) + " AIC";
+  document.getElementById("k-spend-note").textContent = usd(total) + " at list price";
+  document.getElementById("k-share").textContent = total > 0 ? pct(share) : "-";
+  document.getElementById("k-share-note").textContent = calls
+    ? `${pct(tierCalls("premium") / calls)} of calls went to premium models` : "";
+  document.getElementById("k-calls").textContent = fmt(calls);
+  document.getElementById("k-calls-note").textContent = calls
+    ? `${pct((tierCalls("standard") + tierCalls("light")) / calls)} on cheaper tiers` : "";
+  document.getElementById("k-rate").textContent = calls ? (closedAic / calls).toFixed(1) : "-";
+  const p = byTier.get("premium");
+  document.getElementById("k-rate-note").textContent = p?.calls ? `${(p.aic / p.calls).toFixed(1)} on premium` : "";
+
+  const split = document.getElementById("k-split");
+  split.replaceChildren(...TIERS.filter(t => tierAic(t) > 0).map(t => {
+    const seg = el("span", { title: `${TIER_LABEL[t]} ${pct(tierAic(t) / total)}` });
+    seg.style.flex = tierAic(t); seg.style.background = css(t);
+    return seg;
+  }));
+}
+
+function renderTable(byModel, total) {
+  const table = document.getElementById("table");
+  const head = el("tr");
+  for (const h of ["Model", "Tier", "AIC", "Share", "Calls", "AIC / call", "Input (M)", "Cached", "Output (M)"]) head.append(el("th", {}, h));
+  const body = [...byModel].sort((a, b) => b[1].aic - a[1].aic).map(([model, v]) => {
+    const tr = el("tr");
+    const name = el("td"); const sw = el("span", { class: "swatch" }); sw.style.background = css(v.tier);
+    name.append(sw, document.createTextNode(model));
+    tr.append(name, el("td", { class: "tier" }, TIER_LABEL[v.tier]), el("td", {}, fmt(v.aic)),
+      el("td", {}, total > 0 ? pct(v.aic / total) : "-"), el("td", {}, fmt(v.calls)),
+      el("td", {}, v.calls ? (v.aic / v.calls).toFixed(1) : "-"), el("td", {}, (v.in / 1e6).toFixed(1)),
+      el("td", {}, v.in ? pct(v.cache / v.in) : "-"), el("td", {}, (v.out / 1e6).toFixed(2)));
+    return tr;
+  });
+  table.replaceChildren(head, ...body);
+}
+
+function ago(epoch) {
+  const sec = Math.max(0, Date.now() / 1000 - epoch);
+  if (sec < 60) return "just now";
+  if (sec < 3600) return Math.floor(sec / 60) + " min ago";
+  if (sec < 86400) return Math.floor(sec / 3600) + " h ago";
+  return Math.floor(sec / 86400) + " d ago";
+}
+
+function renderSessions() {
+  const host = document.getElementById("sessions");
+  if (!payload.active.length) return host.replaceChildren(el("div", { class: "empty" }, "No sessions running"));
+  host.replaceChildren(...payload.active.map(a => {
+    const row = el("div", { class: "session" });
+    const title = el("div", { class: "title" });
+    const sw = el("span", { class: "swatch" }); sw.style.background = css(a.tier);
+    title.append(sw, document.createTextNode(a.name));
+    row.append(title, el("div", { class: "aic" }, fmt(a.aic) + " AIC"),
+      el("div", { class: "meta" }, `${a.model} · ${a.repo} · active ${ago(a.last)}`));
+    return row;
+  }));
+}
+
+function renderFilters() {
+  const host = document.getElementById("filters");
+  host.replaceChildren(...RANGES.map(r => {
+    const b = el("button", { type: "button", "aria-pressed": String(r.id === range) }, r.label);
+    b.addEventListener("click", () => {
+      range = r.id;
+      try { localStorage.setItem("range", range); } catch {}
+      render();
+    });
+    return b;
+  }));
+}
+
+function render() {
+  if (!payload) return;
+  hideTip();
+  renderFilters();
+  const { rows, days } = sliceRows();
+  const byTier = sumBy(rows, r => r.tier), byModel = sumBy(rows, r => r.model);
+  const total = rows.reduce((a, r) => a + r.aic, 0);
+  renderKpis(rows, byTier);
+  renderDaily(rows, days);
+  renderModels(byModel);
+  renderTable(byModel, total);
+  renderSessions();
+}
+
+async function refresh() {
+  const status = document.getElementById("status");
+  try {
+    const next = await (await fetch("/api/usage")).json();
+    const print = JSON.stringify([next.rows, next.active]);
+    const changed = print !== fingerprint;
+    payload = next; fingerprint = print;
+    if (changed) render(); else renderSessions();
+    status.classList.remove("stale");
+    document.getElementById("updated").textContent = "Live · updated " + new Date().toLocaleTimeString();
+  } catch {
+    status.classList.add("stale");
+    document.getElementById("updated").textContent = "Server not reachable, retrying";
+  }
+}
+
+document.getElementById("legend").replaceChildren(...TIERS.map(t => {
+  const item = el("span"); const sw = el("span", { class: "swatch" }); sw.style.background = css(t);
+  item.append(sw, document.createTextNode(TIER_LABEL[t]));
+  return item;
+}));
+addEventListener("resize", render);
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>
