@@ -5,6 +5,7 @@
   copilot-usage serve [--port 8765] [--budget AIC]                   live dashboard
 """
 import argparse
+import ctypes
 import glob
 import json
 import os
@@ -14,6 +15,7 @@ import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 NANO = 1e9  # 1 AIU (= 1 AI credit = $0.01) is 1e9 nanoAIU
@@ -59,7 +61,7 @@ def parse_session(path):
     last_total = 0
     model, repo = "unknown", "-"
 
-    with open(path, errors="replace") as lines:
+    with open(path, encoding="utf-8", errors="replace") as lines:
         for line in lines:
             if not line.startswith(RELEVANT):
                 continue
@@ -222,7 +224,7 @@ def db_load():
     if _cache.get(DB, (None,))[0] == stamp:
         return _cache[DB][1]
     try:
-        conn = sqlite3.connect(f"file:{DB}?mode=ro", uri=True, timeout=2)
+        conn = sqlite3.connect(f"{Path(DB).as_uri()}?mode=ro", uri=True, timeout=2)
         conn.row_factory = sqlite3.Row
         calls = [call_record(row) for row in
                  conn.execute("SELECT * FROM assistant_usage_events ORDER BY created_at")]
@@ -274,7 +276,7 @@ def usage_rows(records):
 
 def session_name(folder):
     try:
-        with open(os.path.join(folder, "workspace.yaml")) as f:
+        with open(os.path.join(folder, "workspace.yaml"), encoding="utf-8", errors="replace") as f:
             for line in f:
                 if line.startswith("name:"):
                     return line[5:].strip()
@@ -295,6 +297,30 @@ def session_info(session_ids, sessions, meta):
     return info
 
 
+def process_alive(pid):
+    try:
+        pid = int(pid)
+    except ValueError:
+        return False
+    if os.name == "nt":
+        query_limited_information, still_active = 0x1000, 259
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(query_limited_information, False, pid)
+        if not handle:
+            return False
+        exit_code = ctypes.c_ulong()
+        kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
+        kernel32.CloseHandle(handle)
+        return exit_code.value == still_active
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        pass
+    return True
+
+
 def active_sessions(sessions, records, info):
     recent_from = (datetime.now(timezone.utc) - timedelta(minutes=BURN_MINUTES)).strftime("%Y-%m-%dT%H:%M:%S")
     spend, recent, latest = defaultdict(int), defaultdict(int), {}
@@ -311,7 +337,7 @@ def active_sessions(sessions, records, info):
         pid = lock.rsplit(".", 2)[1]
         folder = os.path.dirname(lock)
         session_id = os.path.basename(folder)
-        if session_id not in sessions or not os.path.exists(f"/proc/{pid}"):
+        if session_id not in sessions or not process_alive(pid):
             continue
         current = latest.get(session_id, ("", sessions[session_id]["model"]))[1]
         details = info.get(session_id, {})
