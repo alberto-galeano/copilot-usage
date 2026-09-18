@@ -8,10 +8,11 @@
 :root {
   color-scheme: light;
   --page: #f9f9f7; --surface: #fcfcfb;
-  --text: #0b0b0b; --text-2: #52514e; --muted: #898781;
+  --text: #0b0b0b; --text-2: #52514e; --muted: #6f6d68;
   --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10);
   --premium: #2a78d6; --standard: #eb6834; --light: #1baf7a;
-  --live: #0ca30c; --neutral: #898781;
+  --live: #0ca30c; --neutral: #898781; --focus: #2a78d6;
+  --danger: #c4322a; --warn: #8f5b00; --ok: #0f7f52;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -19,48 +20,77 @@
     --page: #0d0d0d; --surface: #1a1a19;
     --text: #fff; --text-2: #c3c2b7; --muted: #898781;
     --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10);
-    --premium: #3987e5; --standard: #d95926; --light: #199e70;
+    --premium: #3987e5; --standard: #d95926; --light: #199e70; --focus: #6aa7f0;
+    --danger: #f0655a; --warn: #e0a030; --ok: #35b57c;
   }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--page); color: var(--text);
   font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
-main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
+main { max-width: 1120px; margin: 0 auto; padding: 0 16px 48px; }
+main.loading section { opacity: .45; pointer-events: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.bar { background: var(--page); padding: 20px 0 8px; z-index: 5; }
+@media (min-width: 821px) { .bar { position: sticky; top: 0; } }
 header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 h1 { font-size: 20px; margin: 0; font-weight: 600; }
 h2 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
 .sub { color: var(--text-2); font-size: 13px; margin: 0 0 12px; }
 .status { color: var(--text-2); font-size: 13px; display: flex; align-items: center; gap: 8px; }
 .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--live); animation: pulse 2s infinite; }
-.status.stale .pulse { background: var(--muted); animation: none; }
+.status.stale { color: var(--warn); font-weight: 600; }
+.status.stale .pulse { background: var(--warn); animation: none; }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
 @keyframes pulse { 50% { opacity: .35; } }
 
-.filters { display: flex; gap: 4px; margin: 20px 0 8px; flex-wrap: wrap; align-items: center; }
-.filters.dims { margin: 0 0 16px; gap: 8px; }
+.filters { display: flex; gap: 4px; margin: 12px 0 0; flex-wrap: wrap; align-items: center; }
+.filters.dims, .filters.chips { margin: 0 0 12px; gap: 8px; }
+.filters.chips:empty, .filters[hidden] { display: none; }
+.filters.dims { padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.filters label.inline { flex-direction: row; align-items: center; gap: 6px; }
 .filters label { color: var(--text-2); font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
 .filters select, .filters input { font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
   border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; max-width: 220px; }
 .filters .on { border-color: var(--text-2); }
 .filters .gap { width: 12px; }
-.filters .clear { align-self: flex-end; text-decoration: underline; }
-.filters .export { margin-left: auto; }
-.filters .chip { align-self: flex-end; color: var(--text); background: var(--surface); border-color: var(--text-2); }
+.filters .clear { text-decoration: underline; }
+.filters .push { margin-left: auto; display: flex; gap: 4px; }
+.filters .chip { color: var(--text); background: var(--surface); border-color: var(--text-2); border-radius: 999px; }
+@media (pointer: coarse) { .filters button, .filters select, .filters input { min-height: 44px; } }
+.notice { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; padding: 12px 16px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-2); }
+.notice[hidden] { display: none; }
+.notice button { font: inherit; color: var(--text); background: none; border: 1px solid var(--text-2); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
 .filters button { font: inherit; color: var(--text-2); background: none; border: 1px solid transparent;
   border-radius: 6px; padding: 5px 12px; cursor: pointer; }
 .filters button:hover { background: var(--border); }
+.filters button[aria-expanded] { border-color: var(--border); }
+.filters button[aria-expanded=true] { color: var(--text); background: var(--surface); }
 .filters button[aria-pressed=true] { color: var(--text); background: var(--surface); border-color: var(--border); font-weight: 600; }
 
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-.kpis { display: grid; grid-template-columns: 1.4fr 1.4fr 1fr 1fr; gap: 12px; }
+.kpis { display: grid; grid-template-columns: minmax(300px, 1fr) 2.4fr; gap: 12px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+.kpi-grid .kpi { grid-column: span 3; }
+.kpi-grid .kpi.wide { grid-column: span 6; }
 .kpi .label { color: var(--text-2); font-size: 13px; }
 .kpi .value { font-size: 28px; font-weight: 600; line-height: 1.2; margin-top: 4px; }
-.kpi.hero .value { font-size: 48px; line-height: 1.1; }
+.kpi.hero .value { font-size: clamp(34px, 4.4vw, 46px); line-height: 1.1; white-space: nowrap; }
+.kpi .unit { font-size: .45em; font-weight: 500; color: var(--text-2); margin-left: 6px; }
+.delta { display: inline-block; padding: 0 6px; border: 1px solid var(--border); border-radius: 999px;
+  color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.budget { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--grid); }
+.budget[hidden] { display: none; }
+.meter { position: relative; height: 8px; border-radius: 4px; background: var(--grid); }
+.meter .fill { display: block; height: 100%; border-radius: 4px; background: var(--state); }
+.meter .mark { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--text); }
+.budget .state { color: var(--state); }
+.budget.ok { --state: var(--ok); } .budget.warn { --state: var(--warn); } .budget.danger { --state: var(--danger); }
 .kpi .note { color: var(--text-2); font-size: 13px; margin-top: 2px; }
 .split { display: flex; gap: 2px; height: 8px; margin-top: 12px; }
 .split span { border-radius: 2px; min-width: 0; }
 
-.kpis.even { grid-template-columns: repeat(4, 1fr); margin-top: 12px; }
-.kpis.even .value { font-size: 24px; }
+.kpi-grid .value { font-size: 24px; }
 .breakdowns { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
 h3 { font-size: 13px; font-weight: 600; margin: 0 0 8px; color: var(--text-2); }
 .card > h3 { margin-top: 16px; }
@@ -68,7 +98,13 @@ h3 { font-size: 13px; font-weight: 600; margin: 0 0 8px; color: var(--text-2); }
 .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; margin-top: 12px; }
 .stack { display: grid; gap: 12px; margin-top: 12px; }
 .stack > *, .grid > * { min-width: 0; }
-@media (max-width: 820px) { .kpis, .kpis.even, .breakdowns { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+@media (max-width: 820px) {
+  .kpis, .grid { grid-template-columns: 1fr; }
+  .breakdowns { grid-template-columns: 1fr 1fr; }
+  .kpi-grid .kpi { grid-column: span 6; }
+  .kpi-grid .kpi.wide { grid-column: span 12; }
+  .clip, .clip.narrow { max-width: 150px; }
+}
 @media (max-width: 520px) { .breakdowns { grid-template-columns: 1fr; } }
 
 .legend { display: flex; gap: 16px; color: var(--text-2); font-size: 13px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -79,7 +115,8 @@ svg text.val { fill: var(--text-2); }
 svg text.name { fill: var(--text); font-size: 12px; }
 .chart { position: relative; }
 .hit { fill: transparent; }
-.hit:hover, .hit:focus { fill: var(--border); outline: none; }
+.hit:hover, .hit:focus-visible { fill: var(--border); }
+.dash { display: inline-block; width: 14px; margin-right: 6px; border-top: 2px dashed var(--text-2); vertical-align: middle; }
 
 #tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--border);
   border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.18);
@@ -95,8 +132,11 @@ th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--gri
 th { color: var(--text-2); font-weight: 500; font-size: 12px; }
 th.l, td.l { text-align: left; }
 tr:last-child td { border-bottom: 0; }
-tr.pick:hover td, tr.pick:focus td, tr.active td { background: var(--border); }
-tr.pick:focus { outline: none; }
+th:first-child, td:first-child { position: sticky; left: 0; background-color: var(--surface); }
+tr.pick:hover td, tr.pick:focus-visible td, tr.active td { background-image: linear-gradient(var(--border), var(--border)); }
+tr.pick:focus-visible { outline-offset: -2px; }
+th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+th button:hover, th[aria-sort] button { color: var(--text); }
 .clip { display: inline-block; max-width: 340px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 .clip.narrow { max-width: 200px; }
 .more { font: inherit; font-size: 13px; color: var(--text-2); background: none; border: 0; padding: 10px 0 0; cursor: pointer; text-decoration: underline; }
@@ -104,8 +144,7 @@ tr.pick:focus { outline: none; }
 .legend.scale .swatch { margin: 0; width: 14px; height: 14px; }
 .legend.scale .swatch:first-of-type { margin-left: 6px; }
 .legend.scale .swatch:last-of-type { margin-right: 6px; }
-.session:hover .title, .session:focus .title { text-decoration: underline; }
-.session:focus { outline: none; }
+.session:hover .title, .session:focus-visible .title { text-decoration: underline; }
 .scroll { overflow-x: auto; }
 .empty { color: var(--muted); padding: 24px 0; text-align: center; }
 .sessions { display: grid; gap: 10px; }
@@ -116,26 +155,37 @@ tr.pick:focus { outline: none; }
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <h1>Copilot CLI usage</h1>
-    <div class="status" id="status"><span class="pulse"></span><span id="updated">Loading</span></div>
-  </header>
-
-  <div class="filters" id="filters" role="group" aria-label="Date range"></div>
-  <div class="filters dims" id="dims" role="group" aria-label="Filters"></div>
+<main class="loading">
+  <div class="bar">
+    <header>
+      <h1>Copilot CLI usage</h1>
+      <div class="status" id="status"><span class="pulse"></span><span id="updated">Loading usage data</span></div>
+    </header>
+    <div class="filters" id="filters" role="group" aria-label="Date range"></div>
+  </div>
+  <div class="filters chips" id="chips" role="group" aria-label="Active filters"></div>
+  <div class="filters dims" id="dims" role="group" aria-label="Filters" hidden></div>
+  <div class="notice" id="notice" role="status" hidden></div>
 
   <section class="kpis">
-    <div class="card kpi hero"><div class="label">Spend</div><div class="value" id="k-spend">-</div><div class="note" id="k-spend-note"></div><div class="note" id="k-spend-pace"></div></div>
-    <div class="card kpi"><div class="label">Premium share of spend</div><div class="value" id="k-share">-</div><div class="note" id="k-share-note"></div><div class="split" id="k-split"></div></div>
-    <div class="card kpi"><div class="label">Model calls</div><div class="value" id="k-calls">-</div><div class="note" id="k-calls-note"></div></div>
-    <div class="card kpi"><div class="label">AIC per call</div><div class="value" id="k-rate">-</div><div class="note" id="k-rate-note"></div></div>
-  </section>
-  <section class="kpis even">
-    <div class="card kpi"><div class="label">Prompts you sent</div><div class="value" id="k-prompts">-</div><div class="note" id="k-prompts-note"></div></div>
-    <div class="card kpi"><div class="label">Premium requests</div><div class="value" id="k-premium">-</div><div class="note" id="k-premium-note"></div></div>
-    <div class="card kpi"><div class="label">Input read from cache</div><div class="value" id="k-cache">-</div><div class="note" id="k-cache-note"></div></div>
-    <div class="card kpi"><div class="label">Subagent share of spend</div><div class="value" id="k-sub">-</div><div class="note" id="k-sub-note"></div></div>
+    <div class="card kpi hero">
+      <div class="label">Spend</div><div class="value" id="k-spend">-</div>
+      <div class="note" id="k-spend-note"></div>
+      <div class="budget" id="k-budget" hidden>
+        <div class="meter" id="k-meter" role="meter" aria-label="Monthly budget used" aria-valuemin="0"><span class="fill"></span><span class="mark" title="Where even spending would be today"></span></div>
+        <div class="note" id="k-budget-note"></div>
+      </div>
+      <div class="note" id="k-spend-pace"></div>
+    </div>
+    <div class="kpi-grid">
+      <div class="card kpi wide"><div class="label">Premium share of spend</div><div class="value" id="k-share">-</div><div class="note" id="k-share-note"></div><div class="split" id="k-split"></div></div>
+      <div class="card kpi"><div class="label">Model calls</div><div class="value" id="k-calls">-</div><div class="note" id="k-calls-note"></div></div>
+      <div class="card kpi"><div class="label">AIC per call</div><div class="value" id="k-rate">-</div><div class="note" id="k-rate-note"></div></div>
+      <div class="card kpi"><div class="label">Prompts you sent</div><div class="value" id="k-prompts">-</div><div class="note" id="k-prompts-note"></div></div>
+      <div class="card kpi"><div class="label">Premium requests</div><div class="value" id="k-premium">-</div><div class="note" id="k-premium-note"></div></div>
+      <div class="card kpi"><div class="label">Input read from cache</div><div class="value" id="k-cache">-</div><div class="note" id="k-cache-note"></div></div>
+      <div class="card kpi"><div class="label">Subagent share of spend</div><div class="value" id="k-sub">-</div><div class="note" id="k-sub-note"></div></div>
+    </div>
   </section>
 
   <section class="grid">
@@ -239,12 +289,15 @@ const DIMS = [
   { id: "endpoint", label: "API endpoint", show: v => v },
   { id: "finish", label: "Finish reason", show: v => v },
   { id: "host", label: "Host", show: v => v },
-  { id: "session", label: "Session", show: sessionLabel, chip: true },
+  { id: "session", label: "Session", show: sessionLabel, chipOnly: true },
 ];
 const dim = id => DIMS.find(d => d.id === id);
 
 let data = null, server = {}, version = "", showAllSessions = false;
 let range = "month", custom = { from: "", to: "" }, picked = {};
+let filtersOpen = false;
+const sortState = {};
+try { filtersOpen = localStorage.getItem("filtersOpen") === "1"; } catch {}
 
 function readState(text) {
   const params = new URLSearchParams(text);
@@ -371,8 +424,21 @@ function hoverable(node, head, lines) {
 }
 function clickable(node, action) {
   node.classList.add("pick");
+  if (node.tagName !== "TR") node.setAttribute("role", "button");
   node.addEventListener("click", action);
-  node.addEventListener("keydown", e => { if (e.key === "Enter") action(); });
+  node.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); action(); } });
+}
+// One tab stop per chart, arrow keys move between its marks.
+function roving(svg, stride = 1) {
+  const stops = [...svg.querySelectorAll("[tabindex]")];
+  stops.forEach((node, i) => node.setAttribute("tabindex", i ? "-1" : "0"));
+  svg.addEventListener("keydown", e => {
+    const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: stride, ArrowUp: -stride }[e.key];
+    const next = stops[stops.indexOf(e.target) + step];
+    if (!next) return;
+    e.preventDefault();
+    next.focus();
+  });
 }
 
 function roundedTop(x, y, w, h, r) {
@@ -414,7 +480,7 @@ function renderSpend(rows, days) {
   const y = v => m.top + plotH - (v / top) * plotH;
   const slotW = plotW / slots.length;
   const barW = Math.max(2, Math.min(24, slotW - 2));
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by tier over time" });
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": "Spend by tier over time" });
 
   for (let i = 0; i <= 4; i++) {
     const v = (top / 4) * i;
@@ -443,14 +509,27 @@ function renderSpend(rows, days) {
     svg.append(hit);
   });
 
-  if (dailyBudget) {
+  if (dailyBudget)
     svg.append(s("line", { x1: m.left, x2: W - m.right, y1: y(dailyBudget), y2: y(dailyBudget),
-      stroke: css("text-2"), "stroke-dasharray": "4 4" }));
-    svg.append(s("text", { class: "val", x: W - m.right, y: y(dailyBudget) - 5, "text-anchor": "end" },
-      `Budget ${fmt(dailyBudget)} / day`));
-  }
+      stroke: css("text-2"), "stroke-dasharray": "4 4", "pointer-events": "none" }));
+  roving(svg);
   host.replaceChildren(svg);
+  renderLegend(dailyBudget);
   renderCacheRate(rows, slots, slotOf);
+}
+
+function renderLegend(dailyBudget) {
+  const items = TIERS.map(t => {
+    const item = el("span");
+    item.append(swatch(css(t)), TIER_LABEL[t]);
+    return item;
+  });
+  if (dailyBudget) {
+    const item = el("span");
+    item.append(el("span", { class: "dash" }), `Budget, ${fmt(dailyBudget)} AIC / day`);
+    items.push(item);
+  }
+  byId("legend").replaceChildren(...items);
 }
 
 function renderCacheRate(rows, slots, slotOf) {
@@ -460,7 +539,7 @@ function renderCacheRate(rows, slots, slotOf) {
   const bySlot = sumBy(rows, slotOf);
   const slotW = plotW / slots.length;
   const y = share => m.top + plotH - share * plotH;
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Cache hit rate over time" });
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": "Cache hit rate over time" });
   for (const share of [0, 0.5, 1]) {
     svg.append(s("line", { x1: m.left, x2: W - m.right, y1: y(share), y2: y(share), stroke: share ? css("grid") : css("axis") }));
     svg.append(s("text", { x: m.left - 8, y: y(share) + 4, "text-anchor": "end" }, pct(share)));
@@ -480,6 +559,7 @@ function renderCacheRate(rows, slots, slotOf) {
     svg.append(hit);
   });
   svg.prepend(s("path", { d: path, fill: "none", stroke: css("neutral"), "stroke-width": 2, "stroke-linejoin": "round" }));
+  roving(svg);
   host.replaceChildren(svg);
 }
 
@@ -488,15 +568,15 @@ function renderBars(hostId, label, entries, total, limit = 6) {
   const ranked = entries.filter(e => e.aic > 0.5).sort((a, b) => b.aic - a.aic);
   if (!ranked.length) return host.replaceChildren(el("div", { class: "empty" }, "No spend"));
   const shown = ranked.slice(0, limit);
-  const W = host.clientWidth || 300, rowH = 36, H = shown.length * rowH, valueRoom = 56;
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by " + label });
+  const W = host.clientWidth || 300, rowH = 36, H = shown.length * rowH, valueRoom = 92;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": "Spend by " + label });
   shown.forEach((entry, i) => {
     const y0 = i * rowH, w = Math.max(2, (entry.aic / shown[0].aic) * (W - valueRoom));
     const name = s("text", { class: "name", x: 0, y: y0 + 12 }, clip(entry.name, W));
     if (entry.active) name.style.fontWeight = 600;
     svg.append(name);
     svg.append(s("path", { d: roundedRight(0, y0 + 17, w, 10, 4), fill: entry.color || css("neutral") }));
-    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 26 }, fmt(entry.aic)));
+    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 26 }, `${fmt(entry.aic)} · ${pct(entry.aic / total)}`));
     const hit = s("rect", { class: "hit", x: 0, y: y0, width: W, height: rowH - 2, rx: 4 });
     const lines = [{ color: entry.color || css("neutral"), value: fmt(entry.aic) + " AIC", label: pct(entry.aic / total) + " of spend" }];
     if (entry.calls != null) lines.push({ value: fmt(entry.calls), label: "calls" });
@@ -504,8 +584,9 @@ function renderBars(hostId, label, entries, total, limit = 6) {
     if (entry.onPick) clickable(hit, entry.onPick);
     svg.append(hit);
   });
+  roving(svg);
   host.replaceChildren(svg);
-  if (ranked.length > shown.length) host.append(el("p", { class: "sub" }, `and ${ranked.length - shown.length} more, see the filter list`));
+  if (ranked.length > shown.length) host.append(el("p", { class: "sub" }, `and ${ranked.length - shown.length} more under Filters`));
 }
 
 function dimEntries(d, rows, colorOf) {
@@ -528,7 +609,7 @@ function renderHeatmap(rows) {
   const max = Math.max(0, ...[...cells.values()].map(v => v.aic));
   const W = host.clientWidth || 600, left = 36, topRoom = 16, gap = 2;
   const size = (W - left) / 24, H = topRoom + size * 7;
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by weekday and hour" });
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": "Spend by weekday and hour" });
   for (let h = 0; h < 24; h += 3) svg.append(s("text", { x: left + size * h + size / 2, y: 10, "text-anchor": "middle" }, String(h).padStart(2, "0")));
   WEEKDAYS.forEach((name, d) => {
     svg.append(s("text", { x: 0, y: topRoom + size * d + size / 2 + 4 }, name));
@@ -541,6 +622,7 @@ function renderHeatmap(rows) {
       svg.append(cell);
     }
   });
+  roving(svg, 24);
   host.replaceChildren(svg);
   const scale = el("div", { class: "legend scale" });
   scale.append("0", ...[0.12, 0.4, 0.7, 1].map(o => { const sw = swatch(css("premium")); sw.style.opacity = o; return sw; }), fmt(max) + " AIC per hour slot");
@@ -553,20 +635,36 @@ function renderKpis(rows, previous, days, byTier) {
   const tierAic = t => Math.max(0, byTier.get(t)?.aic || 0);
   const tierCalls = t => byTier.get(t)?.calls || 0;
 
-  byId("k-spend").textContent = fmt(total) + " AIC";
-  let note = usd(total) + " at list price";
+  byId("k-spend").replaceChildren(fmt(total), el("span", { class: "unit" }, "AIC"));
+  const note = [usd(total) + " at list price"];
   const before = previous ? totalOf(previous, "aic") : 0;
   if (before > 0.5) {
     const change = total / before - 1;
-    note += ` · ${change >= 0 ? "up" : "down"} ${pct(Math.abs(change))} vs the ${days.length === 1 ? "day" : days.length + " days"} before`;
+    note.push(" · ", el("span", { class: "delta" }, `${change >= 0 ? "↑" : "↓"} ${pct(Math.abs(change))}`),
+      ` vs the ${days.length === 1 ? "day" : days.length + " days"} before`);
   }
-  byId("k-spend-note").textContent = note;
+  byId("k-spend-note").replaceChildren(...note);
   let pace = "";
+  const budget = byId("k-budget");
+  budget.hidden = !(range === "month" && server.budget);
   if (range === "month") {
     const now = new Date(), monthDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const projected = total / now.getDate() * monthDays;
     pace = `On pace for ${fmt(projected)} AIC (${usd(projected)}) this month`;
-    if (server.budget) pace += `, ${pct(projected / server.budget)} of the ${fmt(server.budget)} budget`;
+    if (server.budget) {
+      pace += `, ${pct(projected / server.budget)} of budget`;
+      const used = total / server.budget;
+      const [state, stateLabel] = used >= 1 ? ["danger", "Over budget"]
+        : projected > server.budget ? ["warn", "On pace to go over"] : ["ok", "On track"];
+      budget.className = "budget " + state;
+      const meter = byId("k-meter");
+      meter.setAttribute("aria-valuemax", server.budget);
+      meter.setAttribute("aria-valuenow", Math.round(total));
+      meter.querySelector(".fill").style.width = Math.min(1, used) * 100 + "%";
+      meter.querySelector(".mark").style.left = now.getDate() / monthDays * 100 + "%";
+      byId("k-budget-note").replaceChildren(el("b", { class: "state" }, stateLabel),
+        ` · ${pct(used)} of the ${fmt(server.budget)} AIC budget used`);
+    }
   }
   byId("k-spend-pace").textContent = pace;
 
@@ -605,14 +703,39 @@ function renderKpis(rows, previous, days, byTier) {
   byId("k-sub-note").textContent = `${fmt(totalOf(sub, "calls"))} calls made by subagents`;
 }
 
+const cell = (key, show) => ({ key, show });
+const num = (value, show = fmt) => value ? cell(value, show(value)) : cell(null, "-");
+const sortKey = c => c?.show !== undefined ? c.key : c instanceof Node ? c.textContent : c;
+
+function sortLines(tableId, lines) {
+  const state = sortState[tableId];
+  if (!state) return lines;
+  return [...lines].sort((a, b) => {
+    const x = sortKey(a.cells[state.col]), y = sortKey(b.cells[state.col]);
+    if (x == null || y == null) return (x == null) - (y == null);
+    return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * state.dir;
+  });
+}
+
 function renderTable(table, headers, leftColumns, lines) {
-  const head = el("tr");
-  headers.forEach((h, i) => head.append(el("th", i < leftColumns ? { class: "l" } : {}, h)));
+  const head = el("tr"), state = sortState[table.id];
+  headers.forEach((h, i) => {
+    const th = el("th", { scope: "col", ...(i < leftColumns ? { class: "l" } : {}) });
+    if (state?.col === i) th.setAttribute("aria-sort", state.dir > 0 ? "ascending" : "descending");
+    const button = el("button", { type: "button", title: "Sort by " + h }, h + (state?.col === i ? (state.dir > 0 ? " ↑" : " ↓") : ""));
+    button.addEventListener("click", () => {
+      sortState[table.id] = { col: i, dir: state?.col === i ? -state.dir : i < leftColumns ? 1 : -1 };
+      render();
+      table.querySelectorAll("th button")[i].focus();
+    });
+    th.append(button);
+    head.append(th);
+  });
   table.replaceChildren(head, ...lines.map(({ cells, onPick, active }) => {
     const tr = el("tr", active ? { class: "active" } : {});
-    cells.forEach((cell, i) => {
+    cells.forEach((c, i) => {
       const td = el("td", i < leftColumns ? { class: "l" } : {});
-      td.append(cell);
+      td.append(c?.show !== undefined ? c.show : c);
       tr.append(td);
     });
     if (onPick) { tr.setAttribute("tabindex", "0"); clickable(tr, onPick); }
@@ -623,29 +746,31 @@ function named(color, text) { const span = el("span", { class: "clip", title: te
 
 function renderModelTable(byModel, total) {
   const ranked = [...byModel].sort((a, b) => b[1].aic - a[1].aic);
+  const millions = digits => v => (v / 1e6).toFixed(digits);
   renderTable(byId("table"),
     ["Model", "Tier", "AIC", "Share", "Calls", "AIC / call", "Prompts", "Premium requests", "Input (M)", "Cached",
       "Cache write (M)", "Output (M)", "Reasoning (M)", "AIC / M output"], 2,
-    ranked.map(([model, v]) => ({
+    sortLines("table", ranked.map(([model, v]) => ({
       active: picked.model === model, onPick: () => toggle("model", model),
-      cells: [named(css(v.tier), model), TIER_LABEL[v.tier], fmt(v.aic), total > 0 ? pct(v.aic / total) : "-", fmt(v.calls),
-        v.calls ? (v.aic / v.calls).toFixed(1) : "-", v.prompts ? fmt(v.prompts) : "-", v.premium ? fmt(v.premium) : "-",
-        (v.in / 1e6).toFixed(1), v.in ? pct(v.cache / v.in) : "-", (v.cache_write / 1e6).toFixed(1),
-        (v.out / 1e6).toFixed(2), (v.reasoning / 1e6).toFixed(2), v.out ? fmt(v.aic / (v.out / 1e6)) : "-"],
-    })));
+      cells: [named(css(v.tier), model), TIER_LABEL[v.tier], cell(v.aic, fmt(v.aic)), total > 0 ? cell(v.aic / total, pct(v.aic / total)) : cell(null, "-"),
+        cell(v.calls, fmt(v.calls)), v.calls ? cell(v.aic / v.calls, (v.aic / v.calls).toFixed(1)) : cell(null, "-"), num(v.prompts), num(v.premium),
+        cell(v.in, millions(1)(v.in)), v.in ? cell(v.cache / v.in, pct(v.cache / v.in)) : cell(null, "-"), cell(v.cache_write, millions(1)(v.cache_write)),
+        cell(v.out, millions(2)(v.out)), cell(v.reasoning, millions(2)(v.reasoning)), v.out ? num(v.aic / (v.out / 1e6)) : cell(null, "-")],
+    }))));
 }
 
 function renderSpeedTable(rows, byModel) {
+  const time = ms => cell(ms, secs(ms));
   const lines = [...byModel].sort((a, b) => b[1].aic - a[1].aic).map(([model, v]) => {
     const own = rows.filter(r => r.model === model);
     const dur = quantiles(own, "dur"), ttft = quantiles(own, "ttft"), ottft = quantiles(own, "ottft");
     if (!dur.n) return null;
-    return { cells: [named(css(v.tier), model), fmt(dur.n), secs(v.ms / dur.n), secs(dur.p50), secs(dur.p95),
-      secs(ttft.p50), secs(ttft.p95), secs(ottft.p50), v.itl_n ? fmt(v.itl / v.itl_n) : "-",
-      v.ms ? fmt(v.out_timed / (v.ms / 1000)) : "-"] };
+    return { cells: [named(css(v.tier), model), cell(dur.n, fmt(dur.n)), time(v.ms / dur.n), time(dur.p50), time(dur.p95),
+      time(ttft.p50), time(ttft.p95), time(ottft.p50), v.itl_n ? num(v.itl / v.itl_n) : cell(null, "-"),
+      v.ms ? num(v.out_timed / (v.ms / 1000)) : cell(null, "-")] };
   }).filter(Boolean);
   renderTable(byId("speed"), ["Model", "Timed calls", "Avg s", "p50 s", "p95 s", "First token p50 s", "First token p95 s",
-    "First output p50 s", "Between tokens ms", "Output tokens / s"], 1, lines);
+    "First output p50 s", "Between tokens ms", "Output tokens / s"], 1, sortLines("speed", lines));
   const filtered = totalOf(rows, "filtered");
   byId("speed-sub").textContent = "Whole-call duration, time to first token (and to first visible output, after reasoning) and streaming pace per model. "
     + `Output tokens per second is end to end, so it includes the wait. ${fmt(filtered)} calls tripped the content filter.`;
@@ -667,29 +792,33 @@ function renderSessionTable(rows) {
     models.set(r.model, (models.get(r.model) || 0) + r.aic);
   }
   const ranked = [...bySession].sort((a, b) => b[1].aic - a[1].aic);
-  const shown = showAllSessions ? ranked : ranked.slice(0, SESSIONS_SHOWN);
   const hasToolRuns = ranked.some(([id]) => data.sessions[id]?.tool_runs);
   const headers = ["Session", "Repository", "Branch", "Main model", "AIC", "Prompts", "Calls", "AIC / prompt", "Subagent spend",
     "Subagents", "Turns", "Files touched", "Compactions", "PRs / commits", "Open for", "Last spend"];
   if (hasToolRuns) headers.push("Failed commands");
 
-  renderTable(byId("session-table"), headers, 4, shown.map(([id, v]) => {
+  const lines = sortLines("session-table", ranked.map(([id, v]) => {
     const session = data.sessions[id] || {};
     const models = [...topModel.get(id)].sort((a, b) => b[1] - a[1]);
     const model = models[0][0] + (models.length > 1 ? ` +${models.length - 1}` : "");
     const cells = [named(css(data.tiers[models[0][0]]), sessionLabel(id)),
-      dim("repo").show(session.repo || "-"), clipped(session.branch || "-"), model, fmt(v.aic), v.prompts ? fmt(v.prompts) : "-", fmt(v.calls),
-      v.prompts ? (v.aic / v.prompts).toFixed(1) : "-", v.aic > 0 ? pct((subAic.get(id)?.aic || 0) / v.aic) : "-",
-      fmt(session.subagents || 0), fmt(session.turns || 0), fmt(session.files || 0), fmt(session.checkpoints || 0),
-      `${session.prs || 0} / ${session.commits || 0}`, spanOf(session), shortDay(lastDay.get(id))];
-    if (hasToolRuns) cells.push(session.tool_runs ? `${session.tool_fails || 0} of ${session.tool_runs}` : "-");
+      dim("repo").show(session.repo || "-"), clipped(session.branch || "-"), model, cell(v.aic, fmt(v.aic)), num(v.prompts), cell(v.calls, fmt(v.calls)),
+      v.prompts ? cell(v.aic / v.prompts, (v.aic / v.prompts).toFixed(1)) : cell(null, "-"),
+      v.aic > 0 ? cell((subAic.get(id)?.aic || 0) / v.aic, pct((subAic.get(id)?.aic || 0) / v.aic)) : cell(null, "-"),
+      count(session.subagents), count(session.turns), count(session.files), count(session.checkpoints),
+      cell((session.prs || 0) + (session.commits || 0), `${session.prs || 0} / ${session.commits || 0}`),
+      cell(session.start && session.end ? session.end - session.start : null, spanOf(session)),
+      cell(lastDay.get(id), shortDay(lastDay.get(id)))];
+    if (hasToolRuns) cells.push(session.tool_runs ? cell(session.tool_fails || 0, `${session.tool_fails || 0} of ${session.tool_runs}`) : cell(null, "-"));
     return { cells, active: picked.session === id, onPick: () => toggle("session", id) };
   }));
+  renderTable(byId("session-table"), headers, 4, showAllSessions ? lines : lines.slice(0, SESSIONS_SHOWN));
 
   const more = byId("session-more");
   more.hidden = ranked.length <= SESSIONS_SHOWN;
   more.textContent = showAllSessions ? `Show top ${SESSIONS_SHOWN}` : `Show all ${ranked.length} sessions`;
 }
+const count = n => cell(n || 0, fmt(n || 0));
 function clipped(text) { return el("span", { class: "clip narrow", title: text }, text); }
 
 function ago(epoch) {
@@ -726,19 +855,36 @@ function exportCsv(rows) {
 }
 
 function renderFilters(rows) {
+  const active = Object.keys(picked).length;
+  const toggleFilters = el("button", { type: "button", "aria-expanded": String(filtersOpen), "aria-controls": "dims" },
+    active ? `Filters · ${active}` : "Filters");
+  toggleFilters.addEventListener("click", () => {
+    filtersOpen = !filtersOpen;
+    try { localStorage.setItem("filtersOpen", filtersOpen ? "1" : "0"); } catch {}
+    render();
+    byId("filters").querySelector("[aria-controls]").focus();
+  });
+  const csv = el("button", { type: "button", class: "clear" }, "Export CSV");
+  csv.addEventListener("click", () => exportCsv(rows));
+  const actions = el("span", { class: "push" });
+  actions.append(toggleFilters, csv);
+
   byId("filters").replaceChildren(...RANGES.map(r => {
     const b = el("button", { type: "button", "aria-pressed": String(r.id === range) }, r.label);
     b.addEventListener("click", () => { range = r.id; remember(); render(); });
     return b;
   }), el("span", { class: "gap" }), ...["from", "to"].map(edge => {
-    const input = el("input", { type: "date", "aria-label": "Custom range " + edge, value: range === "custom" ? custom[edge] : "" });
+    const input = el("input", { type: "date", value: range === "custom" ? custom[edge] : "" });
     if (range === "custom") input.classList.add("on");
     input.addEventListener("change", () => { custom[edge] = input.value; range = "custom"; remember(); render(); });
-    return input;
-  }));
+    const label = el("label", { class: "inline" }, edge === "from" ? "From" : "to");
+    label.append(input);
+    return label;
+  }), actions);
 
   const dims = byId("dims");
-  dims.replaceChildren(...DIMS.filter(d => !d.chip).map(d => {
+  dims.hidden = !filtersOpen;
+  dims.replaceChildren(...DIMS.filter(d => !d.chipOnly).map(d => {
     const values = [...new Set(data.rows.map(r => r[d.id]))].sort();
     const select = el("select");
     select.append(el("option", { value: "" }, "All"));
@@ -750,19 +896,31 @@ function renderFilters(rows) {
     label.append(select);
     return label;
   }));
-  for (const d of DIMS.filter(d => d.chip && picked[d.id])) {
-    const chip = el("button", { type: "button", class: "chip", title: "Remove this filter" }, `${d.label}: ${clip(d.show(picked[d.id]), 300)} ×`);
+
+  const chips = byId("chips");
+  chips.replaceChildren(...DIMS.filter(d => picked[d.id]).map(d => {
+    const text = `${d.label}: ${clip(d.show(picked[d.id]), 300)}`;
+    const chip = el("button", { type: "button", class: "chip", "aria-label": "Remove filter " + text }, text + " ×");
     chip.addEventListener("click", () => pick(d.id, ""));
-    dims.append(chip);
-  }
-  if (Object.keys(picked).length) {
-    const clear = el("button", { type: "button", class: "clear" }, "Clear filters");
-    clear.addEventListener("click", () => { picked = {}; remember(); render(); });
-    dims.append(clear);
-  }
-  const csv = el("button", { type: "button", class: "clear export" }, "Export CSV");
-  csv.addEventListener("click", () => exportCsv(rows));
-  dims.append(csv);
+    return chip;
+  }));
+  if (active > 1) chips.append(clearButton());
+}
+
+function clearButton() {
+  const clear = el("button", { type: "button", class: "clear" }, "Clear filters");
+  clear.addEventListener("click", () => { picked = {}; remember(); render(); });
+  return clear;
+}
+
+function renderNotice(rows) {
+  const notice = byId("notice");
+  notice.hidden = rows.length > 0;
+  if (rows.length) return;
+  const widen = el("button", { type: "button" }, "Show all time");
+  widen.addEventListener("click", () => { range = "all"; remember(); render(); });
+  notice.replaceChildren("No usage matches this date range and filters.",
+    ...(Object.keys(picked).length ? [clearButton()] : []), ...(range !== "all" ? [widen] : []));
 }
 
 function render() {
@@ -770,6 +928,7 @@ function render() {
   hideTip();
   const { rows, days, previous } = sliceRows();
   renderFilters(rows);
+  renderNotice(rows);
   const byTier = sumBy(rows, r => r.tier), byModel = sumBy(rows, r => r.model);
   const total = totalOf(rows, "aic");
   renderKpis(rows, previous, days, byTier);
@@ -789,22 +948,25 @@ async function refresh() {
   const status = byId("status");
   try {
     const changed = ingest(await (await fetch("/api/usage?v=" + encodeURIComponent(version))).json());
+    document.querySelector("main").classList.remove("loading");
     if (changed) render(); else renderOpenSessions();
     status.classList.remove("stale");
     byId("updated").textContent = "Live · updated " + new Date().toLocaleTimeString();
   } catch {
     status.classList.add("stale");
-    byId("updated").textContent = "Server not reachable, retrying";
+    byId("updated").textContent = "Server not reachable, showing the last data. Retrying";
   }
 }
 
-byId("legend").replaceChildren(...TIERS.map(t => {
-  const item = el("span");
-  item.append(swatch(css(t)), TIER_LABEL[t]);
-  return item;
-}));
 byId("session-more").addEventListener("click", () => { showAllSessions = !showAllSessions; render(); });
-addEventListener("resize", render);
+let lastWidth = innerWidth, resizeTimer;
+addEventListener("resize", () => {
+  // Mobile browsers fire resize when the URL bar collapses; only width changes the charts.
+  if (innerWidth === lastWidth) return;
+  lastWidth = innerWidth;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 120);
+});
 refresh();
 setInterval(refresh, 5000);
 </script>
