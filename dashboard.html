@@ -11,7 +11,7 @@
   --text: #0b0b0b; --text-2: #52514e; --muted: #898781;
   --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10);
   --premium: #2a78d6; --standard: #eb6834; --light: #1baf7a;
-  --live: #0ca30c;
+  --live: #0ca30c; --neutral: #898781;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -35,7 +35,14 @@ h2 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
 .status.stale .pulse { background: var(--muted); animation: none; }
 @keyframes pulse { 50% { opacity: .35; } }
 
-.filters { display: flex; gap: 4px; margin: 20px 0 16px; flex-wrap: wrap; }
+.filters { display: flex; gap: 4px; margin: 20px 0 8px; flex-wrap: wrap; align-items: center; }
+.filters.dims { margin: 0 0 16px; gap: 8px; }
+.filters label { color: var(--text-2); font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
+.filters select, .filters input { font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; max-width: 220px; }
+.filters .on { border-color: var(--text-2); }
+.filters .gap { width: 12px; }
+.filters .clear { align-self: flex-end; text-decoration: underline; }
 .filters button { font: inherit; color: var(--text-2); background: none; border: 1px solid transparent;
   border-radius: 6px; padding: 5px 12px; cursor: pointer; }
 .filters button:hover { background: var(--border); }
@@ -50,9 +57,12 @@ h2 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
 .split { display: flex; gap: 2px; height: 8px; margin-top: 12px; }
 .split span { border-radius: 2px; min-width: 0; }
 
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.trio h3 { font-size: 13px; font-weight: 600; margin: 0 0 8px; color: var(--text-2); }
+.pick { cursor: pointer; }
 .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; margin-top: 12px; }
 .stack { display: grid; gap: 12px; margin-top: 12px; }
-@media (max-width: 820px) { .kpis { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+@media (max-width: 820px) { .kpis { grid-template-columns: 1fr 1fr; } .grid, .trio { grid-template-columns: 1fr; } }
 
 .legend { display: flex; gap: 16px; color: var(--text-2); font-size: 13px; margin-bottom: 8px; flex-wrap: wrap; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
@@ -96,6 +106,7 @@ td.tier { color: var(--text-2); }
   </header>
 
   <div class="filters" id="filters" role="group" aria-label="Date range"></div>
+  <div class="filters dims" id="dims" role="group" aria-label="Filters"></div>
 
   <section class="kpis">
     <div class="card kpi hero"><div class="label">Spend</div><div class="value" id="k-spend">-</div><div class="note" id="k-spend-note"></div></div>
@@ -120,13 +131,22 @@ td.tier { color: var(--text-2); }
 
   <section class="stack">
     <div class="card">
+      <h2>Where the spend goes</h2>
+      <p class="sub">AI credits by repository, reasoning effort and who started the call. Click a bar to filter by it.</p>
+      <div class="trio">
+        <div><h3>Repository</h3><div class="chart" id="by-repo"></div></div>
+        <div><h3>Reasoning effort</h3><div class="chart" id="by-effort"></div></div>
+        <div><h3>Initiator</h3><div class="chart" id="by-initiator"></div></div>
+      </div>
+    </div>
+    <div class="card">
       <h2>Open sessions</h2>
       <p class="sub">Running Copilot CLI sessions and what each has spent so far.</p>
       <div class="sessions" id="sessions"></div>
     </div>
     <div class="card">
       <h2>Models</h2>
-      <p class="sub">Calls and tokens are recorded when a session closes, so open sessions show spend only.</p>
+      <p class="sub">Premium requests counts each prompt you sent times the model multiplier (the older billing unit, where Opus 5 is 15x and Gemini Flash 14x). Usage from before 8 Jul 2026 comes from session logs and has no latency, effort or initiator detail.</p>
       <div class="scroll"><table id="table"></table></div>
     </div>
   </section>
@@ -149,8 +169,27 @@ const usd = aic => "$" + (aic / 100).toLocaleString("en-US", { minimumFractionDi
 const pct = x => Math.round(x * 100) + "%";
 const css = name => `var(--${name})`;
 
-let payload = null, fingerprint = "", range = "month";
-try { range = localStorage.getItem("range") || range; } catch {}
+const DIMS = [
+  { id: "tier", label: "Tier", show: v => TIER_LABEL[v] || v },
+  { id: "model", label: "Model", show: v => v },
+  { id: "repo", label: "Repository", show: v => v.split("/").pop() },
+  { id: "effort", label: "Reasoning effort", show: v => v },
+  { id: "initiator", label: "Initiator", show: v => v },
+];
+let payload = null, fingerprint = "", range = "month", custom = { from: "", to: "" }, picked = {};
+try {
+  range = localStorage.getItem("range") || range;
+  custom = JSON.parse(localStorage.getItem("custom")) || custom;
+  picked = JSON.parse(localStorage.getItem("picked")) || picked;
+} catch {}
+function remember() {
+  try {
+    localStorage.setItem("range", range);
+    localStorage.setItem("custom", JSON.stringify(custom));
+    localStorage.setItem("picked", JSON.stringify(picked));
+  } catch {}
+}
+function pick(dim, value) { if (value) picked[dim] = value; else delete picked[dim]; remember(); render(); }
 
 function addDays(date, n) { const d = new Date(date); d.setDate(d.getDate() + n); return d; }
 function iso(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
@@ -166,13 +205,20 @@ function el(tag, attrs = {}, text) {
 const s = (tag, attrs, text) => el(tag, { ...attrs, svg: 1 }, text);
 
 function sliceRows() {
-  const today = new Date();
-  const startDate = RANGES.find(r => r.id === range).start(today);
-  const firstDay = payload.rows.length ? payload.rows[0].day : iso(today);
-  const start = startDate ? iso(startDate) : firstDay;
-  const rows = payload.rows.filter(r => r.day >= start);
+  const today = iso(new Date());
+  const firstDay = payload.rows.length ? payload.rows[0].day : today;
+  let start, end = today;
+  if (range === "custom") {
+    start = custom.from || firstDay;
+    end = custom.to || today;
+  } else {
+    const startDate = RANGES.find(r => r.id === range).start(new Date());
+    start = startDate ? iso(startDate) : firstDay;
+  }
+  const rows = payload.rows.filter(r => r.day >= start && r.day <= end
+    && DIMS.every(d => !picked[d.id] || r[d.id] === picked[d.id]));
   const days = [];
-  for (let d = parseDay(start); iso(d) <= iso(today); d = addDays(d, 1)) days.push(iso(d));
+  for (let d = parseDay(start); iso(d) <= end && days.length < 800; d = addDays(d, 1)) days.push(iso(d));
   return { rows, days };
 }
 
@@ -180,8 +226,8 @@ function sumBy(rows, keyOf) {
   const out = new Map();
   for (const r of rows) {
     const key = keyOf(r);
-    const acc = out.get(key) || { aic: 0, calls: 0, in: 0, out: 0, cache: 0, tier: r.tier };
-    for (const f of ["aic", "calls", "in", "out", "cache"]) acc[f] += r[f];
+    const acc = out.get(key) || { aic: 0, calls: 0, in: 0, out: 0, cache: 0, ms: 0, premium: 0, tier: r.tier };
+    for (const f of ["aic", "calls", "in", "out", "cache", "ms", "premium"]) acc[f] += r[f];
     out.set(key, acc);
   }
   return out;
@@ -295,6 +341,32 @@ function renderModels(byModel) {
     host.append(el("p", { class: "sub" }, `${ranked.length - shown.length} smaller models are in the table below.`));
 }
 
+function renderBreakdown(hostId, dim, rows, total) {
+  const host = document.getElementById(hostId);
+  const ranked = [...sumBy(rows, r => r[dim.id])].filter(([, v]) => v.aic > 0.5).sort((a, b) => b[1].aic - a[1].aic);
+  if (!ranked.length) return host.replaceChildren(el("div", { class: "empty" }, "No spend"));
+  const shown = ranked.slice(0, 6);
+  const W = host.clientWidth || 300, rowH = 36, H = shown.length * rowH, valueRoom = 56;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by " + dim.label });
+  shown.forEach(([value, v], i) => {
+    const y0 = i * rowH, w = Math.max(2, (v.aic / shown[0][1].aic) * (W - valueRoom));
+    svg.append(s("text", { class: "name", x: 0, y: y0 + 12 }, dim.show(value)));
+    svg.append(s("path", { d: roundedRight(0, y0 + 17, w, 10, 4), fill: css("neutral") }));
+    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 26 }, fmt(v.aic)));
+    const hit = s("rect", { class: "hit pick", x: 0, y: y0, width: W, height: rowH - 2, rx: 4 });
+    hoverable(hit, value, [
+      { color: css("neutral"), value: fmt(v.aic) + " AIC", label: pct(v.aic / total) + " of spend" },
+      { color: "transparent", value: fmt(v.calls), label: "calls" },
+    ]);
+    const toggle = () => pick(dim.id, picked[dim.id] === value ? "" : value);
+    hit.addEventListener("click", toggle);
+    hit.addEventListener("keydown", e => { if (e.key === "Enter") toggle(); });
+    svg.append(hit);
+  });
+  host.replaceChildren(svg);
+  if (ranked.length > shown.length) host.append(el("p", { class: "sub" }, `and ${ranked.length - shown.length} more`));
+}
+
 function renderKpis(rows, byTier) {
   const total = rows.reduce((a, r) => a + r.aic, 0);
   const calls = rows.reduce((a, r) => a + r.calls, 0);
@@ -326,14 +398,15 @@ function renderKpis(rows, byTier) {
 function renderTable(byModel, total) {
   const table = document.getElementById("table");
   const head = el("tr");
-  for (const h of ["Model", "Tier", "AIC", "Share", "Calls", "AIC / call", "Input (M)", "Cached", "Output (M)"]) head.append(el("th", {}, h));
+  for (const h of ["Model", "Tier", "AIC", "Share", "Calls", "AIC / call", "Premium requests", "Avg seconds", "Input (M)", "Cached", "Output (M)"]) head.append(el("th", {}, h));
   const body = [...byModel].sort((a, b) => b[1].aic - a[1].aic).map(([model, v]) => {
     const tr = el("tr");
     const name = el("td"); const sw = el("span", { class: "swatch" }); sw.style.background = css(v.tier);
     name.append(sw, document.createTextNode(model));
     tr.append(name, el("td", { class: "tier" }, TIER_LABEL[v.tier]), el("td", {}, fmt(v.aic)),
       el("td", {}, total > 0 ? pct(v.aic / total) : "-"), el("td", {}, fmt(v.calls)),
-      el("td", {}, v.calls ? (v.aic / v.calls).toFixed(1) : "-"), el("td", {}, (v.in / 1e6).toFixed(1)),
+      el("td", {}, v.calls ? (v.aic / v.calls).toFixed(1) : "-"), el("td", {}, v.premium ? fmt(v.premium) : "-"),
+      el("td", {}, v.ms && v.calls ? (v.ms / v.calls / 1000).toFixed(1) : "-"), el("td", {}, (v.in / 1e6).toFixed(1)),
       el("td", {}, v.in ? pct(v.cache / v.in) : "-"), el("td", {}, (v.out / 1e6).toFixed(2)));
     return tr;
   });
@@ -366,13 +439,33 @@ function renderFilters() {
   const host = document.getElementById("filters");
   host.replaceChildren(...RANGES.map(r => {
     const b = el("button", { type: "button", "aria-pressed": String(r.id === range) }, r.label);
-    b.addEventListener("click", () => {
-      range = r.id;
-      try { localStorage.setItem("range", range); } catch {}
-      render();
-    });
+    b.addEventListener("click", () => { range = r.id; remember(); render(); });
     return b;
+  }), el("span", { class: "gap" }), ...["from", "to"].map(edge => {
+    const input = el("input", { type: "date", "aria-label": "Custom range " + edge, value: range === "custom" ? custom[edge] : "" });
+    if (range === "custom") input.classList.add("on");
+    input.addEventListener("change", () => { custom[edge] = input.value; range = "custom"; remember(); render(); });
+    return input;
   }));
+
+  const dims = document.getElementById("dims");
+  dims.replaceChildren(...DIMS.map(dim => {
+    const values = [...new Set(payload.rows.map(r => r[dim.id]))].sort();
+    const select = el("select");
+    select.append(el("option", { value: "" }, "All"));
+    for (const v of values) select.append(el("option", { value: v }, dim.show(v)));
+    select.value = values.includes(picked[dim.id]) ? picked[dim.id] : "";
+    if (select.value) select.classList.add("on");
+    select.addEventListener("change", () => pick(dim.id, select.value));
+    const label = el("label", {}, dim.label);
+    label.append(select);
+    return label;
+  }));
+  if (Object.keys(picked).length) {
+    const clear = el("button", { type: "button", class: "clear" }, "Clear filters");
+    clear.addEventListener("click", () => { picked = {}; remember(); render(); });
+    dims.append(clear);
+  }
 }
 
 function render() {
@@ -386,6 +479,8 @@ function render() {
   renderDaily(rows, days);
   renderModels(byModel);
   renderTable(byModel, total);
+  for (const id of ["repo", "effort", "initiator"])
+    renderBreakdown("by-" + id, DIMS.find(d => d.id === id), rows, total);
   renderSessions();
 }
 
