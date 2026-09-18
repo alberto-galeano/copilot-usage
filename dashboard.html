@@ -93,12 +93,9 @@ h2::before { content: ""; width: 3px; height: 12px; border-radius: 2px; backgrou
 .filters button[aria-pressed=true] { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
   border-color: var(--accent); font-weight: 600; box-shadow: var(--lit) color-mix(in srgb, var(--accent) 35%, transparent); }
 
-.card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px;
   box-shadow: var(--card-glow); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow .25s ease-out, border-color .25s ease-out; }
 .card:hover { box-shadow: var(--card-glow-hover); }
-.card::before, .card::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; border: 0 solid var(--accent); opacity: .75; }
-.card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; border-top-left-radius: 10px; }
-.card::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; border-bottom-right-radius: 10px; }
 @media (prefers-reduced-motion: no-preference) {
   .card { animation: rise .45s ease-out both; }
   section:nth-of-type(2) .card { animation-delay: 60ms; } section:nth-of-type(3) .card { animation-delay: 120ms; }
