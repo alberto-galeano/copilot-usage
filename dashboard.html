@@ -43,6 +43,8 @@ h2 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
 .filters .on { border-color: var(--text-2); }
 .filters .gap { width: 12px; }
 .filters .clear { align-self: flex-end; text-decoration: underline; }
+.filters .export { margin-left: auto; }
+.filters .chip { align-self: flex-end; color: var(--text); background: var(--surface); border-color: var(--text-2); }
 .filters button { font: inherit; color: var(--text-2); background: none; border: 1px solid transparent;
   border-radius: 6px; padding: 5px 12px; cursor: pointer; }
 .filters button:hover { background: var(--border); }
@@ -57,12 +59,17 @@ h2 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
 .split { display: flex; gap: 2px; height: 8px; margin-top: 12px; }
 .split span { border-radius: 2px; min-width: 0; }
 
-.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-.trio h3 { font-size: 13px; font-weight: 600; margin: 0 0 8px; color: var(--text-2); }
+.kpis.even { grid-template-columns: repeat(4, 1fr); margin-top: 12px; }
+.kpis.even .value { font-size: 24px; }
+.breakdowns { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+h3 { font-size: 13px; font-weight: 600; margin: 0 0 8px; color: var(--text-2); }
+.card > h3 { margin-top: 16px; }
 .pick { cursor: pointer; }
 .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; margin-top: 12px; }
 .stack { display: grid; gap: 12px; margin-top: 12px; }
-@media (max-width: 820px) { .kpis { grid-template-columns: 1fr 1fr; } .grid, .trio { grid-template-columns: 1fr; } }
+.stack > *, .grid > * { min-width: 0; }
+@media (max-width: 820px) { .kpis, .kpis.even, .breakdowns { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .breakdowns { grid-template-columns: 1fr; } }
 
 .legend { display: flex; gap: 16px; color: var(--text-2); font-size: 13px; margin-bottom: 8px; flex-wrap: wrap; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
@@ -86,13 +93,23 @@ svg text.name { fill: var(--text); font-size: 12px; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 th { color: var(--text-2); font-weight: 500; font-size: 12px; }
-th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th.l, td.l { text-align: left; }
 tr:last-child td { border-bottom: 0; }
-td.tier { color: var(--text-2); }
+tr.pick:hover td, tr.pick:focus td, tr.active td { background: var(--border); }
+tr.pick:focus { outline: none; }
+.clip { display: inline-block; max-width: 340px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.clip.narrow { max-width: 200px; }
+.more { font: inherit; font-size: 13px; color: var(--text-2); background: none; border: 0; padding: 10px 0 0; cursor: pointer; text-decoration: underline; }
+.legend.scale { gap: 3px; align-items: center; margin: 10px 0 0; }
+.legend.scale .swatch { margin: 0; width: 14px; height: 14px; }
+.legend.scale .swatch:first-of-type { margin-left: 6px; }
+.legend.scale .swatch:last-of-type { margin-right: 6px; }
+.session:hover .title, .session:focus .title { text-decoration: underline; }
+.session:focus { outline: none; }
 .scroll { overflow-x: auto; }
 .empty { color: var(--muted); padding: 24px 0; text-align: center; }
 .sessions { display: grid; gap: 10px; }
-.session { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; }
+.session { cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; }
 .session .meta { color: var(--text-2); font-size: 12px; grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .session .aic { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-weight: 600; font-variant-numeric: tabular-nums; }
 .session .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -109,22 +126,30 @@ td.tier { color: var(--text-2); }
   <div class="filters dims" id="dims" role="group" aria-label="Filters"></div>
 
   <section class="kpis">
-    <div class="card kpi hero"><div class="label">Spend</div><div class="value" id="k-spend">-</div><div class="note" id="k-spend-note"></div></div>
+    <div class="card kpi hero"><div class="label">Spend</div><div class="value" id="k-spend">-</div><div class="note" id="k-spend-note"></div><div class="note" id="k-spend-pace"></div></div>
     <div class="card kpi"><div class="label">Premium share of spend</div><div class="value" id="k-share">-</div><div class="note" id="k-share-note"></div><div class="split" id="k-split"></div></div>
     <div class="card kpi"><div class="label">Model calls</div><div class="value" id="k-calls">-</div><div class="note" id="k-calls-note"></div></div>
     <div class="card kpi"><div class="label">AIC per call</div><div class="value" id="k-rate">-</div><div class="note" id="k-rate-note"></div></div>
   </section>
+  <section class="kpis even">
+    <div class="card kpi"><div class="label">Prompts you sent</div><div class="value" id="k-prompts">-</div><div class="note" id="k-prompts-note"></div></div>
+    <div class="card kpi"><div class="label">Premium requests</div><div class="value" id="k-premium">-</div><div class="note" id="k-premium-note"></div></div>
+    <div class="card kpi"><div class="label">Input read from cache</div><div class="value" id="k-cache">-</div><div class="note" id="k-cache-note"></div></div>
+    <div class="card kpi"><div class="label">Subagent share of spend</div><div class="value" id="k-sub">-</div><div class="note" id="k-sub-note"></div></div>
+  </section>
 
   <section class="grid">
     <div class="card">
-      <h2>Daily spend by tier</h2>
-      <p class="sub">AI credits per day. 1 AIC = $0.01.</p>
+      <h2 id="daily-title">Daily spend by tier</h2>
+      <p class="sub" id="daily-sub"></p>
       <div class="legend" id="legend"></div>
       <div class="chart" id="daily"></div>
+      <h3>Input read from cache</h3>
+      <div class="chart" id="cache-rate"></div>
     </div>
     <div class="card">
       <h2>Spend by model</h2>
-      <p class="sub">AI credits, colored by tier.</p>
+      <p class="sub">AI credits, colored by tier. Click a model to filter by it.</p>
       <div class="chart" id="models"></div>
     </div>
   </section>
@@ -132,22 +157,49 @@ td.tier { color: var(--text-2); }
   <section class="stack">
     <div class="card">
       <h2>Where the spend goes</h2>
-      <p class="sub">AI credits by repository, reasoning effort and who started the call. Click a bar to filter by it.</p>
-      <div class="trio">
+      <p class="sub">AI credits by each dimension. Click a bar to filter by it. Token type splits the bill by what was charged for.</p>
+      <div class="breakdowns">
         <div><h3>Repository</h3><div class="chart" id="by-repo"></div></div>
+        <div><h3>Branch</h3><div class="chart" id="by-branch"></div></div>
         <div><h3>Reasoning effort</h3><div class="chart" id="by-effort"></div></div>
         <div><h3>Initiator</h3><div class="chart" id="by-initiator"></div></div>
+        <div><h3>Token type</h3><div class="chart" id="by-tokens"></div></div>
+        <div><h3>API endpoint</h3><div class="chart" id="by-endpoint"></div></div>
+        <div><h3>Finish reason</h3><div class="chart" id="by-finish"></div></div>
+        <div><h3>Host</h3><div class="chart" id="by-host"></div></div>
       </div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>When the spend happens</h2>
+      <p class="sub">AI credits by weekday and hour of day, local time.</p>
+      <div class="chart" id="heatmap"></div>
     </div>
     <div class="card">
       <h2>Open sessions</h2>
-      <p class="sub">Running Copilot CLI sessions and what each has spent so far.</p>
+      <p class="sub">Running Copilot CLI sessions, what each has spent, and its burn rate over the last 15 minutes. Click one to filter by it.</p>
       <div class="sessions" id="sessions"></div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Sessions</h2>
+      <p class="sub">Most expensive sessions in this range. Spend, prompts and calls follow the filters. Turns, files, compactions and refs cover the whole session. Click a row to filter by that session.</p>
+      <div class="scroll"><table id="session-table"></table></div>
+      <button type="button" class="more" id="session-more" hidden></button>
     </div>
     <div class="card">
       <h2>Models</h2>
-      <p class="sub">Premium requests counts each prompt you sent times the model multiplier (the older billing unit, where Opus 5 is 15x and Gemini Flash 14x). Usage from before 8 Jul 2026 comes from session logs and has no latency, effort or initiator detail.</p>
+      <p class="sub">Premium requests counts each prompt you sent times the model multiplier (the older billing unit, where Opus 5 is 15x and Gemini Flash 14x). Usage from before 8 Jul 2026 comes from session logs and has no latency, effort, initiator or token cost detail.</p>
       <div class="scroll"><table id="table"></table></div>
+    </div>
+    <div class="card">
+      <h2>Speed</h2>
+      <p class="sub" id="speed-sub"></p>
+      <div class="scroll"><table id="speed"></table></div>
     </div>
   </section>
 </main>
@@ -163,38 +215,63 @@ const RANGES = [
   { id: "month", label: "This month", start: now => new Date(now.getFullYear(), now.getMonth(), 1) },
   { id: "all", label: "All time", start: () => null },
 ];
+const MEASURES = ["aic", "calls", "prompts", "in", "out", "cache", "cache_write", "reasoning", "ms", "out_timed",
+  "premium", "c_input", "c_cache_read", "c_cache_write", "c_output", "saved", "itl", "itl_n", "filtered"];
+const TOKEN_KINDS = [["c_cache_read", "Cache reads"], ["c_cache_write", "Cache writes"], ["c_output", "Output"], ["c_input", "Fresh input"]];
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const SESSIONS_SHOWN = 12;
 const SVG = "http://www.w3.org/2000/svg";
 const fmt = n => Math.round(n).toLocaleString("en-US");
 const usd = aic => "$" + (aic / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pct = x => Math.round(x * 100) + "%";
+const secs = ms => ms == null ? "-" : (ms / 1000).toFixed(1);
 const css = name => `var(--${name})`;
+const byId = id => document.getElementById(id);
 
+const sessionLabel = id => data.sessions[id]?.label || id.slice(0, 8);
 const DIMS = [
   { id: "tier", label: "Tier", show: v => TIER_LABEL[v] || v },
   { id: "model", label: "Model", show: v => v },
   { id: "repo", label: "Repository", show: v => v.split("/").pop() },
+  { id: "branch", label: "Branch", show: v => v },
   { id: "effort", label: "Reasoning effort", show: v => v },
   { id: "initiator", label: "Initiator", show: v => v },
+  { id: "endpoint", label: "API endpoint", show: v => v },
+  { id: "finish", label: "Finish reason", show: v => v },
+  { id: "host", label: "Host", show: v => v },
+  { id: "session", label: "Session", show: sessionLabel, chip: true },
 ];
-let payload = null, fingerprint = "", range = "month", custom = { from: "", to: "" }, picked = {};
-try {
-  range = localStorage.getItem("range") || range;
-  custom = JSON.parse(localStorage.getItem("custom")) || custom;
-  picked = JSON.parse(localStorage.getItem("picked")) || picked;
-} catch {}
-function remember() {
-  try {
-    localStorage.setItem("range", range);
-    localStorage.setItem("custom", JSON.stringify(custom));
-    localStorage.setItem("picked", JSON.stringify(picked));
-  } catch {}
+const dim = id => DIMS.find(d => d.id === id);
+
+let data = null, server = {}, version = "", showAllSessions = false;
+let range = "month", custom = { from: "", to: "" }, picked = {};
+
+function readState(text) {
+  const params = new URLSearchParams(text);
+  range = params.get("range") || "month";
+  if (range !== "custom" && !RANGES.some(r => r.id === range)) range = "month";
+  custom = { from: params.get("from") || "", to: params.get("to") || "" };
+  picked = {};
+  for (const d of DIMS) if (params.get(d.id)) picked[d.id] = params.get(d.id);
 }
-function pick(dim, value) { if (value) picked[dim] = value; else delete picked[dim]; remember(); render(); }
+function remember() {
+  const params = new URLSearchParams({ range });
+  if (range === "custom") { params.set("from", custom.from); params.set("to", custom.to); }
+  for (const [id, value] of Object.entries(picked)) params.set(id, value);
+  history.replaceState(null, "", "#" + params);
+  try { localStorage.setItem("state", params.toString()); } catch {}
+}
+try { readState(location.hash.slice(1) || localStorage.getItem("state") || ""); } catch {}
+addEventListener("hashchange", () => { readState(location.hash.slice(1)); render(); });
+
+function pick(id, value) { if (value) picked[id] = value; else delete picked[id]; remember(); render(); }
+function toggle(id, value) { pick(id, picked[id] === value ? "" : value); }
 
 function addDays(date, n) { const d = new Date(date); d.setDate(d.getDate() + n); return d; }
 function iso(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 function parseDay(day) { const [y, m, d] = day.split("-").map(Number); return new Date(y, m - 1, d); }
 function shortDay(day) { return parseDay(day).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
+function clip(text, width) { const max = Math.max(8, Math.floor(width / 6.8)); return text.length > max ? text.slice(0, max - 1) + "…" : text; }
 
 function el(tag, attrs = {}, text) {
   const node = tag === "svg" || attrs.svg ? document.createElementNS(SVG, tag) : document.createElement(tag);
@@ -203,10 +280,29 @@ function el(tag, attrs = {}, text) {
   return node;
 }
 const s = (tag, attrs, text) => el(tag, { ...attrs, svg: 1 }, text);
+function swatch(color) { const sw = el("span", { class: "swatch" }); sw.style.background = color; return sw; }
+
+function ingest(next) {
+  server = next;
+  if (!next.rows) return false;
+  version = next.version;
+  const rows = next.rows.map(values => {
+    const r = Object.fromEntries(next.fields.map((f, i) => [f, values[i]]));
+    const session = next.sessions[r.session] || {};
+    r.repo = session.repo || "-"; r.branch = session.branch || "-"; r.host = session.host || "unknown";
+    r.tier = next.tiers[r.model];
+    r.weekday = (parseDay(r.day).getDay() + 6) % 7;
+    return r;
+  });
+  data = { rows, sessions: next.sessions, tiers: next.tiers };
+  return true;
+}
+
+const matches = r => DIMS.every(d => !picked[d.id] || r[d.id] === picked[d.id]);
 
 function sliceRows() {
   const today = iso(new Date());
-  const firstDay = payload.rows.length ? payload.rows[0].day : today;
+  const firstDay = data.rows.length ? data.rows[0].day : today;
   let start, end = today;
   if (range === "custom") {
     start = custom.from || firstDay;
@@ -215,22 +311,33 @@ function sliceRows() {
     const startDate = RANGES.find(r => r.id === range).start(new Date());
     start = startDate ? iso(startDate) : firstDay;
   }
-  const rows = payload.rows.filter(r => r.day >= start && r.day <= end
-    && DIMS.every(d => !picked[d.id] || r[d.id] === picked[d.id]));
+  const rows = data.rows.filter(r => r.day >= start && r.day <= end && matches(r));
   const days = [];
   for (let d = parseDay(start); iso(d) <= end && days.length < 800; d = addDays(d, 1)) days.push(iso(d));
-  return { rows, days };
+
+  // Only compare against a previous window the data fully covers.
+  const prevStart = iso(addDays(parseDay(start), -days.length)), prevEnd = iso(addDays(parseDay(start), -1));
+  const previous = range !== "all" && days.length && firstDay <= prevStart
+    ? data.rows.filter(r => r.day >= prevStart && r.day <= prevEnd && matches(r)) : null;
+  return { rows, days, previous };
 }
 
 function sumBy(rows, keyOf) {
   const out = new Map();
   for (const r of rows) {
     const key = keyOf(r);
-    const acc = out.get(key) || { aic: 0, calls: 0, in: 0, out: 0, cache: 0, ms: 0, premium: 0, tier: r.tier };
-    for (const f of ["aic", "calls", "in", "out", "cache", "ms", "premium"]) acc[f] += r[f];
-    out.set(key, acc);
+    let acc = out.get(key);
+    if (!acc) out.set(key, acc = { ...Object.fromEntries(MEASURES.map(f => [f, 0])), tier: r.tier });
+    for (const f of MEASURES) acc[f] += r[f];
   }
   return out;
+}
+const totalOf = (rows, field) => rows.reduce((a, r) => a + r[field], 0);
+
+function quantiles(rows, field) {
+  const values = rows.flatMap(r => r[field]).sort((a, b) => a - b);
+  const at = q => values.length ? values[Math.min(values.length - 1, Math.floor(q * values.length))] : null;
+  return { n: values.length, p50: at(0.5), p95: at(0.95) };
 }
 
 function niceMax(value) {
@@ -239,12 +346,12 @@ function niceMax(value) {
   return [1, 2, 2.5, 5, 10].map(m => m * pow).find(v => v >= value);
 }
 
-const tip = document.getElementById("tip");
+const tip = byId("tip");
 function showTip(evt, head, lines) {
   tip.replaceChildren(el("div", { class: "head" }, head));
   for (const { color, value, label } of lines) {
     const row = el("div", { class: "row" });
-    const key = el("span", { class: "key" }); key.style.background = color;
+    const key = el("span", { class: "key" }); key.style.background = color || "transparent";
     row.append(key, el("b", {}, value), el("span", {}, label));
     tip.append(row);
   }
@@ -262,6 +369,11 @@ function hoverable(node, head, lines) {
   node.addEventListener("pointerleave", hideTip);
   node.addEventListener("blur", hideTip);
 }
+function clickable(node, action) {
+  node.classList.add("pick");
+  node.addEventListener("click", action);
+  node.addEventListener("keydown", e => { if (e.key === "Enter") action(); });
+}
 
 function roundedTop(x, y, w, h, r) {
   r = Math.min(r, h, w / 2);
@@ -272,146 +384,313 @@ function roundedRight(x, y, w, h, r) {
   return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
 }
 
-function renderDaily(rows, days) {
-  const host = document.getElementById("daily");
-  const W = host.clientWidth || 600, H = 260;
-  const m = { top: 8, right: 8, bottom: 24, left: 44 };
-  const plotW = W - m.left - m.right, plotH = H - m.top - m.bottom;
-  const byDay = new Map(days.map(d => [d, { premium: 0, standard: 0, light: 0 }]));
-  for (const r of rows) if (byDay.has(r.day)) byDay.get(r.day)[r.tier] += r.aic;
-  for (const v of byDay.values()) for (const t of TIERS) v[t] = Math.max(0, v[t]);
+const PLOT = { top: 8, right: 8, bottom: 24, left: 44 };
 
-  const top = niceMax(Math.max(...[...byDay.values()].map(v => v.premium + v.standard + v.light)));
+function timeSlots(days) {
+  if (days.length === 1)
+    return { hourly: true, slotOf: r => r.hour,
+      slots: Array.from({ length: 24 }, (_, h) => ({ key: h, label: String(h).padStart(2, "0") + ":00" })) };
+  return { hourly: false, slotOf: r => r.day, slots: days.map(d => ({ key: d, label: shortDay(d) })) };
+}
+
+function renderSpend(rows, days) {
+  const host = byId("daily");
+  const { hourly, slotOf, slots } = timeSlots(days);
+  byId("daily-title").textContent = hourly ? "Hourly spend by tier" : "Daily spend by tier";
+  byId("daily-sub").textContent = hourly
+    ? `AI credits per hour on ${shortDay(days[0])}. 1 AIC = $0.01.`
+    : "AI credits per day. 1 AIC = $0.01. Click a day to see it by hour.";
+
+  const W = host.clientWidth || 600, H = 240, m = PLOT;
+  const plotW = W - m.left - m.right, plotH = H - m.top - m.bottom;
+  const bySlot = new Map(slots.map(slot => [slot.key, { premium: 0, standard: 0, light: 0 }]));
+  for (const r of rows) if (bySlot.has(slotOf(r))) bySlot.get(slotOf(r))[r.tier] += r.aic;
+  for (const v of bySlot.values()) for (const t of TIERS) v[t] = Math.max(0, v[t]);
+
+  const now = new Date();
+  const dailyBudget = server.budget && range === "month" && !hourly
+    ? server.budget / new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() : 0;
+  const top = niceMax(Math.max(dailyBudget, ...[...bySlot.values()].map(v => v.premium + v.standard + v.light)));
   const y = v => m.top + plotH - (v / top) * plotH;
-  const slot = plotW / days.length;
-  const barW = Math.max(2, Math.min(24, slot - 2));
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Daily spend by tier" });
+  const slotW = plotW / slots.length;
+  const barW = Math.max(2, Math.min(24, slotW - 2));
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by tier over time" });
 
   for (let i = 0; i <= 4; i++) {
     const v = (top / 4) * i;
     svg.append(s("line", { x1: m.left, x2: W - m.right, y1: y(v), y2: y(v), stroke: i ? css("grid") : css("axis") }));
-    svg.append(s("text", { x: m.left - 8, y: y(v) + 4, "text-anchor": "end" }, fmt(v)));
+    svg.append(s("text", { x: m.left - 8, y: y(v) + 4, "text-anchor": "end" }, top < 8 ? v.toFixed(1) : fmt(v)));
   }
 
-  const labelEvery = Math.ceil(days.length / Math.max(1, Math.floor(plotW / 70)));
-  days.forEach((day, i) => {
-    const cx = m.left + slot * i + slot / 2, x = cx - barW / 2;
-    const values = byDay.get(day);
+  const labelEvery = Math.ceil(slots.length / Math.max(1, Math.floor(plotW / 70)));
+  slots.forEach((slot, i) => {
+    const cx = m.left + slotW * i + slotW / 2, x = cx - barW / 2;
+    const values = bySlot.get(slot.key);
     const present = TIERS.filter(t => values[t] > 0);
     let base = 0;
     present.forEach((tier, idx) => {
       const y1 = y(base + values[tier]), y0 = y(base) - (idx ? 2 : 0);
-      const h = Math.max(1, y0 - y1);
       const isTop = idx === present.length - 1;
-      svg.append(s("path", { d: roundedTop(x, y1, barW, h, isTop ? 4 : 0), fill: css(tier) }));
+      svg.append(s("path", { d: roundedTop(x, y1, barW, Math.max(1, y0 - y1), isTop ? 4 : 0), fill: css(tier) }));
       base += values[tier];
     });
-    if (i % labelEvery === 0) svg.append(s("text", { x: cx, y: H - 6, "text-anchor": "middle" }, shortDay(day)));
+    if (i % labelEvery === 0) svg.append(s("text", { x: cx, y: H - 6, "text-anchor": "middle" }, slot.label));
 
-    const hit = s("rect", { class: "hit", x: m.left + slot * i, y: m.top, width: slot, height: plotH });
-    hoverable(hit, `${shortDay(day)} · ${fmt(base)} AIC`,
+    const hit = s("rect", { class: "hit", x: m.left + slotW * i, y: m.top, width: slotW, height: plotH });
+    hoverable(hit, `${slot.label} · ${fmt(base)} AIC`,
       TIERS.map(t => ({ color: css(t), value: fmt(values[t]), label: TIER_LABEL[t] })));
+    if (!hourly) clickable(hit, () => { custom = { from: slot.key, to: slot.key }; range = "custom"; remember(); render(); });
     svg.append(hit);
   });
+
+  if (dailyBudget) {
+    svg.append(s("line", { x1: m.left, x2: W - m.right, y1: y(dailyBudget), y2: y(dailyBudget),
+      stroke: css("text-2"), "stroke-dasharray": "4 4" }));
+    svg.append(s("text", { class: "val", x: W - m.right, y: y(dailyBudget) - 5, "text-anchor": "end" },
+      `Budget ${fmt(dailyBudget)} / day`));
+  }
   host.replaceChildren(svg);
+  renderCacheRate(rows, slots, slotOf);
 }
 
-function renderModels(byModel) {
-  const host = document.getElementById("models");
-  const ranked = [...byModel].filter(([, v]) => v.aic > 0.5).sort((a, b) => b[1].aic - a[1].aic);
-  if (!ranked.length) return host.replaceChildren(el("div", { class: "empty" }, "No spend in this range"));
-  const shown = ranked.slice(0, 8);
-  const W = host.clientWidth || 360, rowH = 40, H = shown.length * rowH;
-  const max = shown[0][1].aic, valueRoom = 56;
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by model" });
-  shown.forEach(([model, v], i) => {
-    const y0 = i * rowH, w = Math.max(2, (v.aic / max) * (W - valueRoom));
-    svg.append(s("text", { class: "name", x: 0, y: y0 + 13 }, model));
-    svg.append(s("path", { d: roundedRight(0, y0 + 19, w, 12, 4), fill: css(v.tier) }));
-    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 29 }, fmt(v.aic)));
-    const hit = s("rect", { class: "hit", x: 0, y: y0, width: W, height: rowH - 2, rx: 4 });
-    hoverable(hit, model, [
-      { color: css(v.tier), value: fmt(v.aic) + " AIC", label: TIER_LABEL[v.tier] },
-      { color: "transparent", value: fmt(v.calls), label: "calls" },
+function renderCacheRate(rows, slots, slotOf) {
+  const host = byId("cache-rate");
+  const W = host.clientWidth || 600, H = 96, m = { ...PLOT, top: 10 };
+  const plotW = W - m.left - m.right, plotH = H - m.top - m.bottom;
+  const bySlot = sumBy(rows, slotOf);
+  const slotW = plotW / slots.length;
+  const y = share => m.top + plotH - share * plotH;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Cache hit rate over time" });
+  for (const share of [0, 0.5, 1]) {
+    svg.append(s("line", { x1: m.left, x2: W - m.right, y1: y(share), y2: y(share), stroke: share ? css("grid") : css("axis") }));
+    svg.append(s("text", { x: m.left - 8, y: y(share) + 4, "text-anchor": "end" }, pct(share)));
+  }
+  let path = "", pen = "M";
+  slots.forEach((slot, i) => {
+    const v = bySlot.get(slot.key);
+    if (!v || !v.in) { pen = "M"; return; }
+    const cx = m.left + slotW * i + slotW / 2, share = v.cache / v.in;
+    path += `${pen}${cx},${y(share)}`; pen = "L";
+    if (slots.length <= 45) svg.append(s("circle", { cx, cy: y(share), r: 3, fill: css("neutral"), stroke: css("surface"), "stroke-width": 2 }));
+    const hit = s("rect", { class: "hit", x: m.left + slotW * i, y: m.top, width: slotW, height: plotH });
+    hoverable(hit, slot.label, [
+      { color: css("neutral"), value: pct(share), label: "of input read from cache" },
+      { value: fmt(v.saved) + " AIC", label: "saved vs uncached input" },
     ]);
     svg.append(hit);
   });
+  svg.prepend(s("path", { d: path, fill: "none", stroke: css("neutral"), "stroke-width": 2, "stroke-linejoin": "round" }));
   host.replaceChildren(svg);
-  if (ranked.length > shown.length)
-    host.append(el("p", { class: "sub" }, `${ranked.length - shown.length} smaller models are in the table below.`));
 }
 
-function renderBreakdown(hostId, dim, rows, total) {
-  const host = document.getElementById(hostId);
-  const ranked = [...sumBy(rows, r => r[dim.id])].filter(([, v]) => v.aic > 0.5).sort((a, b) => b[1].aic - a[1].aic);
+function renderBars(hostId, label, entries, total, limit = 6) {
+  const host = byId(hostId);
+  const ranked = entries.filter(e => e.aic > 0.5).sort((a, b) => b.aic - a.aic);
   if (!ranked.length) return host.replaceChildren(el("div", { class: "empty" }, "No spend"));
-  const shown = ranked.slice(0, 6);
+  const shown = ranked.slice(0, limit);
   const W = host.clientWidth || 300, rowH = 36, H = shown.length * rowH, valueRoom = 56;
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by " + dim.label });
-  shown.forEach(([value, v], i) => {
-    const y0 = i * rowH, w = Math.max(2, (v.aic / shown[0][1].aic) * (W - valueRoom));
-    svg.append(s("text", { class: "name", x: 0, y: y0 + 12 }, dim.show(value)));
-    svg.append(s("path", { d: roundedRight(0, y0 + 17, w, 10, 4), fill: css("neutral") }));
-    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 26 }, fmt(v.aic)));
-    const hit = s("rect", { class: "hit pick", x: 0, y: y0, width: W, height: rowH - 2, rx: 4 });
-    hoverable(hit, value, [
-      { color: css("neutral"), value: fmt(v.aic) + " AIC", label: pct(v.aic / total) + " of spend" },
-      { color: "transparent", value: fmt(v.calls), label: "calls" },
-    ]);
-    const toggle = () => pick(dim.id, picked[dim.id] === value ? "" : value);
-    hit.addEventListener("click", toggle);
-    hit.addEventListener("keydown", e => { if (e.key === "Enter") toggle(); });
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by " + label });
+  shown.forEach((entry, i) => {
+    const y0 = i * rowH, w = Math.max(2, (entry.aic / shown[0].aic) * (W - valueRoom));
+    const name = s("text", { class: "name", x: 0, y: y0 + 12 }, clip(entry.name, W));
+    if (entry.active) name.style.fontWeight = 600;
+    svg.append(name);
+    svg.append(s("path", { d: roundedRight(0, y0 + 17, w, 10, 4), fill: entry.color || css("neutral") }));
+    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 26 }, fmt(entry.aic)));
+    const hit = s("rect", { class: "hit", x: 0, y: y0, width: W, height: rowH - 2, rx: 4 });
+    const lines = [{ color: entry.color || css("neutral"), value: fmt(entry.aic) + " AIC", label: pct(entry.aic / total) + " of spend" }];
+    if (entry.calls != null) lines.push({ value: fmt(entry.calls), label: "calls" });
+    hoverable(hit, entry.title || entry.name, lines);
+    if (entry.onPick) clickable(hit, entry.onPick);
     svg.append(hit);
   });
   host.replaceChildren(svg);
-  if (ranked.length > shown.length) host.append(el("p", { class: "sub" }, `and ${ranked.length - shown.length} more`));
+  if (ranked.length > shown.length) host.append(el("p", { class: "sub" }, `and ${ranked.length - shown.length} more, see the filter list`));
 }
 
-function renderKpis(rows, byTier) {
-  const total = rows.reduce((a, r) => a + r.aic, 0);
-  const calls = rows.reduce((a, r) => a + r.calls, 0);
+function dimEntries(d, rows, colorOf) {
+  return [...sumBy(rows, r => r[d.id])].map(([value, v]) => ({
+    name: d.show(value), title: value, aic: v.aic, calls: v.calls, color: colorOf?.(v),
+    active: picked[d.id] === value, onPick: () => toggle(d.id, value),
+  }));
+}
+
+function renderTokenKinds(rows, total) {
+  const entries = TOKEN_KINDS.map(([field, name]) => ({ name, aic: totalOf(rows, field) }));
+  const itemized = entries.reduce((a, e) => a + e.aic, 0);
+  entries.push({ name: "Not itemized (session logs)", aic: total - itemized });
+  renderBars("by-tokens", "token type", entries, total);
+}
+
+function renderHeatmap(rows) {
+  const host = byId("heatmap");
+  const cells = sumBy(rows, r => r.weekday * 24 + r.hour);
+  const max = Math.max(0, ...[...cells.values()].map(v => v.aic));
+  const W = host.clientWidth || 600, left = 36, topRoom = 16, gap = 2;
+  const size = (W - left) / 24, H = topRoom + size * 7;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Spend by weekday and hour" });
+  for (let h = 0; h < 24; h += 3) svg.append(s("text", { x: left + size * h + size / 2, y: 10, "text-anchor": "middle" }, String(h).padStart(2, "0")));
+  WEEKDAYS.forEach((name, d) => {
+    svg.append(s("text", { x: 0, y: topRoom + size * d + size / 2 + 4 }, name));
+    for (let h = 0; h < 24; h++) {
+      const v = cells.get(d * 24 + h), aic = Math.max(0, v?.aic || 0);
+      const cell = s("rect", { x: left + size * h + gap / 2, y: topRoom + size * d + gap / 2, width: size - gap, height: size - gap, rx: 3,
+        fill: aic > 0.5 ? css("premium") : css("grid"), "fill-opacity": aic > 0.5 ? 0.12 + 0.88 * (aic / max) : 0.6 });
+      hoverable(cell, `${name} ${String(h).padStart(2, "0")}:00`, [
+        { color: css("premium"), value: fmt(aic) + " AIC", label: v ? `${fmt(v.calls)} calls` : "no calls" }]);
+      svg.append(cell);
+    }
+  });
+  host.replaceChildren(svg);
+  const scale = el("div", { class: "legend scale" });
+  scale.append("0", ...[0.12, 0.4, 0.7, 1].map(o => { const sw = swatch(css("premium")); sw.style.opacity = o; return sw; }), fmt(max) + " AIC per hour slot");
+  host.append(scale);
+}
+
+function renderKpis(rows, previous, days, byTier) {
+  const total = totalOf(rows, "aic"), calls = totalOf(rows, "calls"), prompts = totalOf(rows, "prompts");
   const closedAic = rows.filter(r => r.calls > 0).reduce((a, r) => a + r.aic, 0);
   const tierAic = t => Math.max(0, byTier.get(t)?.aic || 0);
   const tierCalls = t => byTier.get(t)?.calls || 0;
-  const share = total > 0 ? tierAic("premium") / total : 0;
 
-  document.getElementById("k-spend").textContent = fmt(total) + " AIC";
-  document.getElementById("k-spend-note").textContent = usd(total) + " at list price";
-  document.getElementById("k-share").textContent = total > 0 ? pct(share) : "-";
-  document.getElementById("k-share-note").textContent = calls
-    ? `${pct(tierCalls("premium") / calls)} of calls went to premium models` : "";
-  document.getElementById("k-calls").textContent = fmt(calls);
-  document.getElementById("k-calls-note").textContent = calls
-    ? `${pct((tierCalls("standard") + tierCalls("light")) / calls)} on cheaper tiers` : "";
-  document.getElementById("k-rate").textContent = calls ? (closedAic / calls).toFixed(1) : "-";
-  const p = byTier.get("premium");
-  document.getElementById("k-rate-note").textContent = p?.calls ? `${(p.aic / p.calls).toFixed(1)} on premium` : "";
+  byId("k-spend").textContent = fmt(total) + " AIC";
+  let note = usd(total) + " at list price";
+  const before = previous ? totalOf(previous, "aic") : 0;
+  if (before > 0.5) {
+    const change = total / before - 1;
+    note += ` · ${change >= 0 ? "up" : "down"} ${pct(Math.abs(change))} vs the ${days.length === 1 ? "day" : days.length + " days"} before`;
+  }
+  byId("k-spend-note").textContent = note;
+  let pace = "";
+  if (range === "month") {
+    const now = new Date(), monthDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const projected = total / now.getDate() * monthDays;
+    pace = `On pace for ${fmt(projected)} AIC (${usd(projected)}) this month`;
+    if (server.budget) pace += `, ${pct(projected / server.budget)} of the ${fmt(server.budget)} budget`;
+  }
+  byId("k-spend-pace").textContent = pace;
 
-  const split = document.getElementById("k-split");
-  split.replaceChildren(...TIERS.filter(t => tierAic(t) > 0).map(t => {
+  byId("k-share").textContent = total > 0 ? pct(tierAic("premium") / total) : "-";
+  let shareNote = calls ? `${pct(tierCalls("premium") / calls)} of calls went to premium models.` : "";
+  const p = byTier.get("premium"), std = byTier.get("standard");
+  if (p?.calls && std?.calls) {
+    const saving = p.aic - p.calls * (std.aic / std.calls);
+    if (saving > 0.5) shareNote += ` At the standard rate per call they'd cost ${fmt(saving)} AIC less.`;
+  }
+  byId("k-share-note").textContent = shareNote;
+  byId("k-split").replaceChildren(...TIERS.filter(t => tierAic(t) > 0).map(t => {
     const seg = el("span", { title: `${TIER_LABEL[t]} ${pct(tierAic(t) / total)}` });
     seg.style.flex = tierAic(t); seg.style.background = css(t);
     return seg;
   }));
+
+  byId("k-calls").textContent = fmt(calls);
+  byId("k-calls-note").textContent = calls ? `${pct((tierCalls("standard") + tierCalls("light")) / calls)} on cheaper tiers` : "";
+  byId("k-rate").textContent = calls ? (closedAic / calls).toFixed(1) : "-";
+  byId("k-rate-note").textContent = p?.calls ? `${(p.aic / p.calls).toFixed(1)} on premium` : "";
+
+  const detailed = rows.filter(r => r.initiator !== "unknown");
+  const detailedAic = totalOf(detailed, "aic"), detailedCalls = totalOf(detailed, "calls");
+  byId("k-prompts").textContent = prompts ? fmt(prompts) : "-";
+  byId("k-prompts-note").textContent = prompts
+    ? `${(detailedAic / prompts).toFixed(1)} AIC and ${(detailedCalls / prompts).toFixed(1)} model calls per prompt` : "";
+  const premium = totalOf(rows, "premium");
+  byId("k-premium").textContent = premium ? fmt(premium) : "-";
+  byId("k-premium-note").textContent = premium ? `${(total / premium).toFixed(1)} AIC per premium request` : "";
+  const input = totalOf(rows, "in");
+  byId("k-cache").textContent = input ? pct(totalOf(rows, "cache") / input) : "-";
+  byId("k-cache-note").textContent = input ? `Saved ${fmt(totalOf(rows, "saved"))} AIC vs paying the input price` : "";
+  const sub = rows.filter(r => r.initiator === "sub-agent");
+  byId("k-sub").textContent = total > 0 ? pct(totalOf(sub, "aic") / total) : "-";
+  byId("k-sub-note").textContent = `${fmt(totalOf(sub, "calls"))} calls made by subagents`;
 }
 
-function renderTable(byModel, total) {
-  const table = document.getElementById("table");
+function renderTable(table, headers, leftColumns, lines) {
   const head = el("tr");
-  for (const h of ["Model", "Tier", "AIC", "Share", "Calls", "AIC / call", "Premium requests", "Avg seconds", "Input (M)", "Cached", "Output (M)"]) head.append(el("th", {}, h));
-  const body = [...byModel].sort((a, b) => b[1].aic - a[1].aic).map(([model, v]) => {
-    const tr = el("tr");
-    const name = el("td"); const sw = el("span", { class: "swatch" }); sw.style.background = css(v.tier);
-    name.append(sw, document.createTextNode(model));
-    tr.append(name, el("td", { class: "tier" }, TIER_LABEL[v.tier]), el("td", {}, fmt(v.aic)),
-      el("td", {}, total > 0 ? pct(v.aic / total) : "-"), el("td", {}, fmt(v.calls)),
-      el("td", {}, v.calls ? (v.aic / v.calls).toFixed(1) : "-"), el("td", {}, v.premium ? fmt(v.premium) : "-"),
-      el("td", {}, v.ms && v.calls ? (v.ms / v.calls / 1000).toFixed(1) : "-"), el("td", {}, (v.in / 1e6).toFixed(1)),
-      el("td", {}, v.in ? pct(v.cache / v.in) : "-"), el("td", {}, (v.out / 1e6).toFixed(2)));
+  headers.forEach((h, i) => head.append(el("th", i < leftColumns ? { class: "l" } : {}, h)));
+  table.replaceChildren(head, ...lines.map(({ cells, onPick, active }) => {
+    const tr = el("tr", active ? { class: "active" } : {});
+    cells.forEach((cell, i) => {
+      const td = el("td", i < leftColumns ? { class: "l" } : {});
+      td.append(cell);
+      tr.append(td);
+    });
+    if (onPick) { tr.setAttribute("tabindex", "0"); clickable(tr, onPick); }
     return tr;
-  });
-  table.replaceChildren(head, ...body);
+  }));
 }
+function named(color, text) { const span = el("span", { class: "clip", title: text }); span.append(swatch(color), text); return span; }
+
+function renderModelTable(byModel, total) {
+  const ranked = [...byModel].sort((a, b) => b[1].aic - a[1].aic);
+  renderTable(byId("table"),
+    ["Model", "Tier", "AIC", "Share", "Calls", "AIC / call", "Prompts", "Premium requests", "Input (M)", "Cached",
+      "Cache write (M)", "Output (M)", "Reasoning (M)", "AIC / M output"], 2,
+    ranked.map(([model, v]) => ({
+      active: picked.model === model, onPick: () => toggle("model", model),
+      cells: [named(css(v.tier), model), TIER_LABEL[v.tier], fmt(v.aic), total > 0 ? pct(v.aic / total) : "-", fmt(v.calls),
+        v.calls ? (v.aic / v.calls).toFixed(1) : "-", v.prompts ? fmt(v.prompts) : "-", v.premium ? fmt(v.premium) : "-",
+        (v.in / 1e6).toFixed(1), v.in ? pct(v.cache / v.in) : "-", (v.cache_write / 1e6).toFixed(1),
+        (v.out / 1e6).toFixed(2), (v.reasoning / 1e6).toFixed(2), v.out ? fmt(v.aic / (v.out / 1e6)) : "-"],
+    })));
+}
+
+function renderSpeedTable(rows, byModel) {
+  const lines = [...byModel].sort((a, b) => b[1].aic - a[1].aic).map(([model, v]) => {
+    const own = rows.filter(r => r.model === model);
+    const dur = quantiles(own, "dur"), ttft = quantiles(own, "ttft"), ottft = quantiles(own, "ottft");
+    if (!dur.n) return null;
+    return { cells: [named(css(v.tier), model), fmt(dur.n), secs(v.ms / dur.n), secs(dur.p50), secs(dur.p95),
+      secs(ttft.p50), secs(ttft.p95), secs(ottft.p50), v.itl_n ? fmt(v.itl / v.itl_n) : "-",
+      v.ms ? fmt(v.out_timed / (v.ms / 1000)) : "-"] };
+  }).filter(Boolean);
+  renderTable(byId("speed"), ["Model", "Timed calls", "Avg s", "p50 s", "p95 s", "First token p50 s", "First token p95 s",
+    "First output p50 s", "Between tokens ms", "Output tokens / s"], 1, lines);
+  const filtered = totalOf(rows, "filtered");
+  byId("speed-sub").textContent = "Whole-call duration, time to first token (and to first visible output, after reasoning) and streaming pace per model. "
+    + `Output tokens per second is end to end, so it includes the wait. ${fmt(filtered)} calls tripped the content filter.`;
+}
+
+function spanOf(session) {
+  if (!session.start || !session.end) return "-";
+  const minutes = (session.end - session.start) / 60;
+  return minutes < 90 ? fmt(minutes) + " min" : minutes < 2880 ? (minutes / 60).toFixed(1) + " h" : fmt(minutes / 1440) + " d";
+}
+
+function renderSessionTable(rows) {
+  const bySession = sumBy(rows, r => r.session);
+  const subAic = sumBy(rows.filter(r => r.initiator === "sub-agent"), r => r.session);
+  const lastDay = new Map(), topModel = new Map();
+  for (const r of rows) {
+    if (r.day > (lastDay.get(r.session) || "")) lastDay.set(r.session, r.day);
+    const models = topModel.get(r.session) || topModel.set(r.session, new Map()).get(r.session);
+    models.set(r.model, (models.get(r.model) || 0) + r.aic);
+  }
+  const ranked = [...bySession].sort((a, b) => b[1].aic - a[1].aic);
+  const shown = showAllSessions ? ranked : ranked.slice(0, SESSIONS_SHOWN);
+  const hasToolRuns = ranked.some(([id]) => data.sessions[id]?.tool_runs);
+  const headers = ["Session", "Repository", "Branch", "Main model", "AIC", "Prompts", "Calls", "AIC / prompt", "Subagent spend",
+    "Subagents", "Turns", "Files touched", "Compactions", "PRs / commits", "Open for", "Last spend"];
+  if (hasToolRuns) headers.push("Failed commands");
+
+  renderTable(byId("session-table"), headers, 4, shown.map(([id, v]) => {
+    const session = data.sessions[id] || {};
+    const models = [...topModel.get(id)].sort((a, b) => b[1] - a[1]);
+    const model = models[0][0] + (models.length > 1 ? ` +${models.length - 1}` : "");
+    const cells = [named(css(data.tiers[models[0][0]]), sessionLabel(id)),
+      dim("repo").show(session.repo || "-"), clipped(session.branch || "-"), model, fmt(v.aic), v.prompts ? fmt(v.prompts) : "-", fmt(v.calls),
+      v.prompts ? (v.aic / v.prompts).toFixed(1) : "-", v.aic > 0 ? pct((subAic.get(id)?.aic || 0) / v.aic) : "-",
+      fmt(session.subagents || 0), fmt(session.turns || 0), fmt(session.files || 0), fmt(session.checkpoints || 0),
+      `${session.prs || 0} / ${session.commits || 0}`, spanOf(session), shortDay(lastDay.get(id))];
+    if (hasToolRuns) cells.push(session.tool_runs ? `${session.tool_fails || 0} of ${session.tool_runs}` : "-");
+    return { cells, active: picked.session === id, onPick: () => toggle("session", id) };
+  }));
+
+  const more = byId("session-more");
+  more.hidden = ranked.length <= SESSIONS_SHOWN;
+  more.textContent = showAllSessions ? `Show top ${SESSIONS_SHOWN}` : `Show all ${ranked.length} sessions`;
+}
+function clipped(text) { return el("span", { class: "clip narrow", title: text }, text); }
 
 function ago(epoch) {
   const sec = Math.max(0, Date.now() / 1000 - epoch);
@@ -421,23 +700,33 @@ function ago(epoch) {
   return Math.floor(sec / 86400) + " d ago";
 }
 
-function renderSessions() {
-  const host = document.getElementById("sessions");
-  if (!payload.active.length) return host.replaceChildren(el("div", { class: "empty" }, "No sessions running"));
-  host.replaceChildren(...payload.active.map(a => {
-    const row = el("div", { class: "session" });
+function renderOpenSessions() {
+  const host = byId("sessions");
+  if (!server.active.length) return host.replaceChildren(el("div", { class: "empty" }, "No sessions running"));
+  host.replaceChildren(...server.active.map(a => {
+    const row = el("div", { class: "session", tabindex: "0" });
     const title = el("div", { class: "title" });
-    const sw = el("span", { class: "swatch" }); sw.style.background = css(a.tier);
-    title.append(sw, document.createTextNode(a.name));
+    title.append(swatch(css(a.tier)), a.name);
+    const burn = a.burn > 0.5 ? ` · burning ${fmt(a.burn)} AIC/h` : "";
+    const where = a.branch && a.branch !== "-" ? `${dim("repo").show(a.repo)} @ ${a.branch}` : a.repo;
     row.append(title, el("div", { class: "aic" }, fmt(a.aic) + " AIC"),
-      el("div", { class: "meta" }, `${a.model} · ${a.repo} · active ${ago(a.last)}`));
+      el("div", { class: "meta" }, `${a.model} · ${where} · active ${ago(a.last)}${burn}`));
+    clickable(row, () => toggle("session", a.id));
     return row;
   }));
 }
 
-function renderFilters() {
-  const host = document.getElementById("filters");
-  host.replaceChildren(...RANGES.map(r => {
+function exportCsv(rows) {
+  const fields = Object.keys(rows[0] || {}).filter(f => !Array.isArray(rows[0][f]) && f !== "weekday");
+  const quote = v => /[",\n]/.test(String(v)) ? `"${String(v).replaceAll('"', '""')}"` : v;
+  const text = [fields.join(","), ...rows.map(r => fields.map(f => quote(r[f])).join(","))].join("\n");
+  const link = el("a", { href: URL.createObjectURL(new Blob([text], { type: "text/csv" })), download: "copilot-usage.csv" });
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function renderFilters(rows) {
+  byId("filters").replaceChildren(...RANGES.map(r => {
     const b = el("button", { type: "button", "aria-pressed": String(r.id === range) }, r.label);
     b.addEventListener("click", () => { range = r.id; remember(); render(); });
     return b;
@@ -448,63 +737,73 @@ function renderFilters() {
     return input;
   }));
 
-  const dims = document.getElementById("dims");
-  dims.replaceChildren(...DIMS.map(dim => {
-    const values = [...new Set(payload.rows.map(r => r[dim.id]))].sort();
+  const dims = byId("dims");
+  dims.replaceChildren(...DIMS.filter(d => !d.chip).map(d => {
+    const values = [...new Set(data.rows.map(r => r[d.id]))].sort();
     const select = el("select");
     select.append(el("option", { value: "" }, "All"));
-    for (const v of values) select.append(el("option", { value: v }, dim.show(v)));
-    select.value = values.includes(picked[dim.id]) ? picked[dim.id] : "";
+    for (const v of values) select.append(el("option", { value: v }, d.show(v)));
+    select.value = values.includes(picked[d.id]) ? picked[d.id] : "";
     if (select.value) select.classList.add("on");
-    select.addEventListener("change", () => pick(dim.id, select.value));
-    const label = el("label", {}, dim.label);
+    select.addEventListener("change", () => pick(d.id, select.value));
+    const label = el("label", {}, d.label);
     label.append(select);
     return label;
   }));
+  for (const d of DIMS.filter(d => d.chip && picked[d.id])) {
+    const chip = el("button", { type: "button", class: "chip", title: "Remove this filter" }, `${d.label}: ${clip(d.show(picked[d.id]), 300)} ×`);
+    chip.addEventListener("click", () => pick(d.id, ""));
+    dims.append(chip);
+  }
   if (Object.keys(picked).length) {
     const clear = el("button", { type: "button", class: "clear" }, "Clear filters");
     clear.addEventListener("click", () => { picked = {}; remember(); render(); });
     dims.append(clear);
   }
+  const csv = el("button", { type: "button", class: "clear export" }, "Export CSV");
+  csv.addEventListener("click", () => exportCsv(rows));
+  dims.append(csv);
 }
 
 function render() {
-  if (!payload) return;
+  if (!data) return;
   hideTip();
-  renderFilters();
-  const { rows, days } = sliceRows();
+  const { rows, days, previous } = sliceRows();
+  renderFilters(rows);
   const byTier = sumBy(rows, r => r.tier), byModel = sumBy(rows, r => r.model);
-  const total = rows.reduce((a, r) => a + r.aic, 0);
-  renderKpis(rows, byTier);
-  renderDaily(rows, days);
-  renderModels(byModel);
-  renderTable(byModel, total);
-  for (const id of ["repo", "effort", "initiator"])
-    renderBreakdown("by-" + id, DIMS.find(d => d.id === id), rows, total);
-  renderSessions();
+  const total = totalOf(rows, "aic");
+  renderKpis(rows, previous, days, byTier);
+  renderSpend(rows, days);
+  renderBars("models", "model", dimEntries(dim("model"), rows, v => css(v.tier)), total, 8);
+  for (const id of ["repo", "branch", "effort", "initiator", "endpoint", "finish", "host"])
+    renderBars("by-" + id, dim(id).label, dimEntries(dim(id), rows), total);
+  renderTokenKinds(rows, total);
+  renderHeatmap(rows);
+  renderSessionTable(rows);
+  renderModelTable(byModel, total);
+  renderSpeedTable(rows, byModel);
+  renderOpenSessions();
 }
 
 async function refresh() {
-  const status = document.getElementById("status");
+  const status = byId("status");
   try {
-    const next = await (await fetch("/api/usage")).json();
-    const print = JSON.stringify([next.rows, next.active]);
-    const changed = print !== fingerprint;
-    payload = next; fingerprint = print;
-    if (changed) render(); else renderSessions();
+    const changed = ingest(await (await fetch("/api/usage?v=" + encodeURIComponent(version))).json());
+    if (changed) render(); else renderOpenSessions();
     status.classList.remove("stale");
-    document.getElementById("updated").textContent = "Live · updated " + new Date().toLocaleTimeString();
+    byId("updated").textContent = "Live · updated " + new Date().toLocaleTimeString();
   } catch {
     status.classList.add("stale");
-    document.getElementById("updated").textContent = "Server not reachable, retrying";
+    byId("updated").textContent = "Server not reachable, retrying";
   }
 }
 
-document.getElementById("legend").replaceChildren(...TIERS.map(t => {
-  const item = el("span"); const sw = el("span", { class: "swatch" }); sw.style.background = css(t);
-  item.append(sw, document.createTextNode(TIER_LABEL[t]));
+byId("legend").replaceChildren(...TIERS.map(t => {
+  const item = el("span");
+  item.append(swatch(css(t)), TIER_LABEL[t]);
   return item;
 }));
+byId("session-more").addEventListener("click", () => { showAllSessions = !showAllSessions; render(); });
 addEventListener("resize", render);
 refresh();
 setInterval(refresh, 5000);

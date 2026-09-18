@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Copilot CLI usage per model, from ~/.copilot session-store.db and session logs.
 
-  copilot-usage [--since YYYY-MM-DD] [--by month|day|repo]   print a table
-  copilot-usage serve [--port 8765]                          live dashboard
+  copilot-usage [--since YYYY-MM-DD] [--by month|day|repo|branch]   print a table
+  copilot-usage serve [--port 8765] [--budget AIC]                   live dashboard
 """
 import argparse
 import glob
@@ -12,13 +12,16 @@ import re
 import sqlite3
 import time
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlparse
 
 NANO = 1e9  # 1 AIU (= 1 AI credit = $0.01) is 1e9 nanoAIU
 SESSIONS = os.path.expanduser("~/.copilot/session-state")
 DB = os.path.expanduser("~/.copilot/session-store.db")
 HERE = os.path.dirname(os.path.realpath(__file__))
+BURN_MINUTES = 15
+BUDGET = None  # monthly AIC budget, set by serve --budget
 
 # First match wins. Edit to match how your org classifies models.
 TIER_RULES = [
@@ -37,8 +40,9 @@ def tier_of(model):
     return next(tier for tier, pattern in TIER_RULES if re.search(pattern, model))
 
 
-def local_day(ts):
-    return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone().strftime("%Y-%m-%d")
+def local_day_hour(ts):
+    moment = datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone()
+    return moment.strftime("%Y-%m-%d"), moment.hour
 
 
 def parse_session(path):
@@ -122,34 +126,112 @@ def file_stamp(path):
         return None
 
 
-def db_calls():
-    """One record per model call from session-store.db (exists since CLI ~1.0.7x)."""
+SUMS = ("aiu", "calls", "prompts", "in", "out", "cache", "cache_write", "reasoning", "ms",
+        "out_timed", "premium", "c_input", "c_cache_read", "c_cache_write", "c_output", "saved",
+        "itl", "itl_n", "filtered")
+LISTS = ("ttft", "ottft", "dur")  # per-call milliseconds, kept raw so the dashboard can take percentiles
+NANO_SUMS = ("c_input", "c_cache_read", "c_cache_write", "c_output", "saved")
+KEYS = ("day", "hour", "session", "model", "initiator", "effort", "endpoint", "finish")
+TOKEN_KINDS = ("input", "cache_read", "cache_write", "output")
+
+
+def blank_record(**fields):
+    return {**dict.fromkeys(SUMS, 0), **{name: [] for name in LISTS}, **fields}
+
+
+def token_costs(details_json):
+    """nanoAIU per token kind, plus what the cache reads would have cost extra at the input price."""
+    try:
+        details = {d["tokenType"]: d for d in json.loads(details_json or "[]")}
+        rate = {kind: d["costPerBatch"] / d["batchSize"] for kind, d in details.items()}
+        costs = {kind: details[kind]["tokenCount"] * rate[kind] if kind in details else 0
+                 for kind in TOKEN_KINDS}
+        saved = 0
+        if "input" in rate and "cache_read" in rate:
+            saved = details["cache_read"]["tokenCount"] * (rate["input"] - rate["cache_read"])
+        return costs, max(0, saved)
+    except (ValueError, TypeError, KeyError, ZeroDivisionError):
+        return dict.fromkeys(TOKEN_KINDS, 0), 0
+
+
+def call_record(row):
+    costs, saved = token_costs(row["token_details_json"])
+    ms = row["duration_ms"] or 0
+    itl = row["inter_token_latency_ms"]
+    return blank_record(**{
+        "session": row["session_id"], "ts": row["created_at"].replace(" ", "T"), "model": row["model"],
+        "initiator": row["initiator"] or "other", "effort": row["reasoning_effort"] or "unknown",
+        "endpoint": row["api_endpoint"] or "unknown", "finish": row["finish_reason"] or "unknown",
+        "aiu": row["total_nano_aiu"] or 0, "calls": 1, "prompts": int(row["initiator"] == "user"),
+        "in": row["input_tokens"] or 0, "out": row["output_tokens"] or 0,
+        "cache": row["cache_read_tokens"] or 0, "cache_write": row["cache_write_tokens"] or 0,
+        "reasoning": row["reasoning_tokens"] or 0, "ms": ms,
+        "out_timed": (row["output_tokens"] or 0) if ms else 0,
+        # Premium-request billing only charges the multiplier on user-initiated calls.
+        "premium": (row["request_multiplier"] or 0) if row["initiator"] == "user" else 0,
+        **{"c_" + kind: cost for kind, cost in costs.items()}, "saved": saved,
+        "itl": round(itl or 0, 2), "itl_n": int(itl is not None),
+        "filtered": row["content_filter_triggered"] or 0,
+        "ttft": [round(row["time_to_first_token_ms"])] if row["time_to_first_token_ms"] is not None else [],
+        "ottft": [round(row["output_ttft_ms"])] if row["output_ttft_ms"] is not None else [],
+        "dur": [ms] if ms else [],
+    })
+
+
+def epoch(ts):
+    if not ts:
+        return None
+    moment = datetime.fromisoformat(ts.replace("Z", "+00:00").replace(" ", "T"))
+    return (moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)).timestamp()
+
+
+SESSION_COUNTS = {
+    "turns": "SELECT session_id, COUNT(*) FROM turns GROUP BY 1",
+    "checkpoints": "SELECT session_id, COUNT(*) FROM checkpoints GROUP BY 1",
+    "files": "SELECT session_id, COUNT(*) FROM session_files GROUP BY 1",
+    "prs": "SELECT session_id, COUNT(*) FROM session_refs WHERE ref_type = 'pr' GROUP BY 1",
+    "commits": "SELECT session_id, COUNT(*) FROM session_refs WHERE ref_type = 'commit' GROUP BY 1",
+    "subagents": "SELECT session_id, COUNT(DISTINCT agent_id) FROM assistant_usage_events GROUP BY 1",
+    "tool_runs": "SELECT session_id, COUNT(*) FROM forge_trajectory_events WHERE exit_code IS NOT NULL GROUP BY 1",
+    "tool_fails": "SELECT session_id, COUNT(*) FROM forge_trajectory_events WHERE exit_code != 0 GROUP BY 1",
+}
+
+
+def session_meta(conn):
+    meta = {}
+    for row in conn.execute("SELECT * FROM sessions"):
+        meta[row["id"]] = {
+            "repo": row["repository"] or os.path.basename(row["cwd"] or "") or "-",
+            "branch": row["branch"] or "-", "host": row["host_type"] or "unknown",
+            "summary": (row["summary"] or "").strip().split("\n")[0][:120],
+            "start": epoch(row["created_at"]), "end": epoch(row["updated_at"]),
+        }
+    for field, query in SESSION_COUNTS.items():
+        try:
+            for session_id, count in conn.execute(query):
+                if session_id in meta:
+                    meta[session_id][field] = count
+        except sqlite3.Error:  # older CLI versions lack some of these tables
+            pass
+    return meta
+
+
+def db_load():
+    """(one record per model call, metadata per session) from session-store.db (exists since CLI ~1.0.7x)."""
     stamp = (file_stamp(DB), file_stamp(DB + "-wal"))
     if _cache.get(DB, (None,))[0] == stamp:
         return _cache[DB][1]
     try:
         conn = sqlite3.connect(f"file:{DB}?mode=ro", uri=True, timeout=2)
-        found = conn.execute("""
-            SELECT e.session_id, e.created_at, e.model, e.initiator, e.reasoning_effort,
-                   e.total_nano_aiu, e.input_tokens, e.output_tokens, e.cache_read_tokens,
-                   e.cache_write_tokens, e.duration_ms, e.request_multiplier, s.repository, s.cwd
-            FROM assistant_usage_events e LEFT JOIN sessions s ON s.id = e.session_id
-            ORDER BY e.created_at""").fetchall()
+        conn.row_factory = sqlite3.Row
+        calls = [call_record(row) for row in
+                 conn.execute("SELECT * FROM assistant_usage_events ORDER BY created_at")]
+        meta = session_meta(conn)
         conn.close()
-    except sqlite3.Error:
-        return _cache.get(DB, (None, []))[1]
-    records = [{
-        "session": session, "ts": ts.replace(" ", "T"), "model": model,
-        "repo": repo or os.path.basename(cwd or "") or "-",
-        "initiator": initiator or "other", "effort": effort or "unknown",
-        "aiu": aiu or 0, "calls": 1, "in": tok_in or 0, "out": tok_out or 0,
-        "cache": cache or 0, "cache_write": cache_write or 0, "ms": ms or 0,
-        # Premium-request billing only charges the multiplier on user-initiated calls.
-        "premium": (multiplier or 0) if initiator == "user" else 0,
-    } for session, ts, model, initiator, effort, aiu, tok_in, tok_out, cache, cache_write, ms,
-        multiplier, repo, cwd in found]
-    _cache[DB] = (stamp, records)
-    return records
+    except (sqlite3.Error, IndexError):
+        return _cache.get(DB, (None, ([], {})))[1]
+    _cache[DB] = (stamp, (calls, meta))
+    return calls, meta
 
 
 def log_records(sessions, db_start):
@@ -159,33 +241,34 @@ def log_records(sessions, db_start):
         for ts, model, aiu, calls, tok in session["deltas"]:
             if cutoff and ts >= cutoff:
                 continue
-            yield {
-                "session": session_id, "ts": ts, "model": model, "repo": session["repo"],
-                "initiator": "unknown", "effort": "unknown", "aiu": aiu, "calls": calls,
-                "in": tok.get("inputTokens", 0), "out": tok.get("outputTokens", 0),
-                "cache": tok.get("cacheReadTokens", 0), "cache_write": tok.get("cacheWriteTokens", 0),
-                "ms": 0, "premium": 0,
-            }
+            yield blank_record(
+                session=session_id, ts=ts, model=model, initiator="unknown", effort="unknown",
+                endpoint="unknown", finish="unknown", aiu=aiu, calls=calls,
+                **{"in": tok.get("inputTokens", 0)}, out=tok.get("outputTokens", 0),
+                cache=tok.get("cacheReadTokens", 0), cache_write=tok.get("cacheWriteTokens", 0),
+                reasoning=tok.get("reasoningTokens", 0))
 
 
 def all_records(sessions):
-    calls = db_calls()
+    calls, _meta = db_load()
     db_start = {}
     for record in calls:
         db_start.setdefault(record["session"], record["ts"])
     return calls + list(log_records(sessions, db_start))
 
 
-MEASURES = ("aiu", "calls", "in", "out", "cache", "cache_write", "ms", "premium")
-
-
 def usage_rows(records):
-    rows = defaultdict(lambda: dict.fromkeys(MEASURES, 0))
+    rows = {}
     for record in records:
-        key = (local_day(record["ts"]), record["model"], record["repo"],
-               record["initiator"], record["effort"])
-        for measure in MEASURES:
-            rows[key][measure] += record[measure]
+        day, hour = local_day_hour(record["ts"])
+        key = (day, hour, *(record[k] for k in KEYS[2:]))
+        row = rows.get(key)
+        if row is None:
+            row = rows[key] = blank_record()
+        for name in SUMS:
+            row[name] += record[name]
+        for name in LISTS:
+            row[name] += record[name]
     return rows
 
 
@@ -200,11 +283,28 @@ def session_name(folder):
     return os.path.basename(folder)[:8]
 
 
-def active_sessions(sessions, records):
-    spend, model = defaultdict(int), {}
-    for record in sorted(records, key=lambda r: r["ts"]):
-        spend[record["session"]] += record["aiu"]
-        model[record["session"]] = record["model"]
+def session_info(session_ids, sessions, meta):
+    info = {}
+    for session_id in session_ids:
+        known = meta.get(session_id, {})
+        info[session_id] = {
+            "repo": sessions.get(session_id, {}).get("repo", "-"), "branch": "-", "host": "unknown",
+            **known,
+            "label": known.get("summary") or session_name(os.path.join(SESSIONS, session_id)),
+        }
+    return info
+
+
+def active_sessions(sessions, records, info):
+    recent_from = (datetime.now(timezone.utc) - timedelta(minutes=BURN_MINUTES)).strftime("%Y-%m-%dT%H:%M:%S")
+    spend, recent, latest = defaultdict(int), defaultdict(int), {}
+    for record in records:
+        session_id = record["session"]
+        spend[session_id] += record["aiu"]
+        if record["ts"] >= recent_from:
+            recent[session_id] += record["aiu"]
+        if record["ts"] >= latest.get(session_id, ("",))[0]:
+            latest[session_id] = (record["ts"], record["model"])
 
     active = []
     for lock in glob.glob(os.path.join(SESSIONS, "*", "inuse.*.lock")):
@@ -213,35 +313,65 @@ def active_sessions(sessions, records):
         session_id = os.path.basename(folder)
         if session_id not in sessions or not os.path.exists(f"/proc/{pid}"):
             continue
-        current = model.get(session_id, sessions[session_id]["model"])
+        current = latest.get(session_id, ("", sessions[session_id]["model"]))[1]
+        details = info.get(session_id, {})
         active.append({
+            "id": session_id,
             "name": session_name(folder),
-            "repo": sessions[session_id]["repo"],
+            "repo": details.get("repo") or sessions[session_id]["repo"],
+            "branch": details.get("branch", "-"),
             "model": current,
             "tier": tier_of(current),
             "aic": spend[session_id] / NANO,
+            "burn": recent[session_id] / NANO * 60 / BURN_MINUTES,
             "last": os.path.getmtime(os.path.join(folder, "events.jsonl")),
         })
     return sorted(active, key=lambda s: -s["last"])
 
 
-def api_payload():
+def data_version():
+    return str(hash(tuple(sorted((path, stamp) for path, (stamp, _) in _cache.items()))))
+
+
+_built = {}
+
+
+def usage_data():
     sessions = load_sessions()
-    records = all_records(sessions)
-    rows = [
-        {"day": day, "model": model, "tier": tier_of(model), "repo": repo,
-         "initiator": initiator, "effort": effort, "aic": r["aiu"] / NANO,
-         **{m: r[m] for m in MEASURES if m != "aiu"}}
-        for (day, model, repo, initiator, effort), r in sorted(usage_rows(records).items())
-    ]
-    return {"now": time.time(), "rows": rows, "active": active_sessions(sessions, records)}
+    _calls, meta = db_load()
+    version = data_version()
+    if _built.get("version") != version:
+        records = all_records(sessions)
+        rows = sorted(usage_rows(records).items())
+        info = session_info({key[2] for key, _ in rows}, sessions, meta)
+        in_aic = ("aiu",) + NANO_SUMS
+        _built.update(version=version, sessions=sessions, records=records, data={
+            "fields": list(KEYS) + ["aic" if name == "aiu" else name for name in SUMS] + list(LISTS),
+            "rows": [[*key, *(round(row[name] / NANO, 3) if name in in_aic else row[name] for name in SUMS),
+                      *(row[name] for name in LISTS)] for key, row in rows],
+            "sessions": info,
+            "tiers": {model: tier_of(model) for model in {key[3] for key, _ in rows}},
+        })
+    return _built
+
+
+def api_payload(known_version=""):
+    built = usage_data()
+    payload = {"now": time.time(), "version": built["version"], "budget": BUDGET,
+               "burn_minutes": BURN_MINUTES,
+               "active": active_sessions(built["sessions"], built["records"], built["data"]["sessions"])}
+    if known_version != built["version"]:
+        payload.update(built["data"])
+    return payload
 
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == "/api/usage":
-            self.reply(json.dumps(api_payload()).encode(), "application/json")
-        elif self.path == "/":
+        url = urlparse(self.path)
+        if url.path == "/api/usage":
+            known = parse_qs(url.query).get("v", [""])[0]
+            self.reply(json.dumps(api_payload(known), separators=(",", ":")).encode(), "application/json")
+        elif url.path == "/":
             with open(os.path.join(HERE, "dashboard.html"), "rb") as f:
                 self.reply(f.read(), "text/html; charset=utf-8")
         else:
@@ -261,20 +391,25 @@ class Handler(BaseHTTPRequestHandler):
 
 def serve(port):
     print("Indexing session logs...")
-    load_sessions()
+    usage_data()
     print(f"Dashboard at http://localhost:{port}  (Ctrl+C to stop)")
     ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
 
 
 def print_table(since, by):
-    group_of = {"month": lambda day, repo: day[:7], "day": lambda day, repo: day,
-                "repo": lambda day, repo: repo}[by]
+    sessions = load_sessions()
+    _calls, meta = db_load()
+    detail = lambda session_id, field: (meta.get(session_id, {}).get(field)
+                                        or sessions.get(session_id, {}).get(field, "-"))
+    group_of = {"month": lambda day, session_id: day[:7], "day": lambda day, session_id: day,
+                "repo": lambda day, session_id: detail(session_id, "repo"),
+                "branch": lambda day, session_id: f"{detail(session_id, 'repo')} @ {detail(session_id, 'branch')}"}[by]
     groups = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
-    for (day, model, repo, _initiator, _effort), row in usage_rows(all_records(load_sessions())).items():
+    for (day, _hour, session_id, model, *_rest), row in usage_rows(all_records(sessions)).items():
         if day < since:
             continue
-        for field, value in row.items():
-            groups[group_of(day, repo)][model][field] += value
+        for field in ("aiu", "calls", "in", "out", "cache"):
+            groups[group_of(day, session_id)][model][field] += row[field]
 
     for key in sorted(groups):
         models = groups[key]
@@ -294,10 +429,13 @@ def main():
     parser.add_argument("command", nargs="?", choices=["serve"])
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--since", default="", help="YYYY-MM-DD")
-    parser.add_argument("--by", choices=["month", "day", "repo"], default="month")
+    parser.add_argument("--by", choices=["month", "day", "repo", "branch"], default="month")
+    parser.add_argument("--budget", type=float, help="monthly AIC budget to track on the dashboard")
     args = parser.parse_args()
 
     if args.command == "serve":
+        global BUDGET
+        BUDGET = args.budget
         try:
             serve(args.port)
         except KeyboardInterrupt:
