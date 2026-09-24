@@ -31,9 +31,9 @@ BUDGET = None  # monthly AIC budget, set by serve --budget
 
 # First match wins. Edit to match how your org classifies models.
 TIER_RULES = [
-    ("light", r"haiku|mini|flash|luna|nano"),
-    ("premium", r"opus|-sol"),
-    ("standard", r""),
+    ("low", r"haiku|mini|flash|luna|nano"),
+    ("high", r"opus|-sol"),
+    ("medium", r""),
 ]
 
 RELEVANT = tuple(

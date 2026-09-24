@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Copilot CLI usage</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cstyle%3Epath{fill:%2324292f}%40media(prefers-color-scheme:dark){path{fill:%23fff}}%3C/style%3E%3Cpath d=%22M23.922 16.992c-.861 1.495-5.859 5.023-11.922 5.023-6.063 0-11.061-3.528-11.922-5.023A.641.641 0 0 1 0 16.736v-2.869a.841.841 0 0 1 .053-.22c.372-.935 1.347-2.292 2.605-2.656.167-.429.414-1.055.644-1.517a10.195 10.195 0 0 1-.052-1.086c0-1.331.282-2.499 1.132-3.368.397-.406.89-.717 1.474-.952 1.399-1.136 3.392-2.093 6.122-2.093 2.731 0 4.767.957 6.166 2.093.584.235 1.077.546 1.474.952.85.869 1.132 2.037 1.132 3.368 0 .368-.014.733-.052 1.086.23.462.477 1.088.644 1.517 1.258.364 2.233 1.721 2.605 2.656a.832.832 0 0 1 .053.22v2.869a.641.641 0 0 1-.078.256ZM12.172 11h-.344a4.323 4.323 0 0 1-.355.508C10.703 12.455 9.555 13 7.965 13c-1.725 0-2.989-.359-3.782-1.259a2.005 2.005 0 0 1-.085-.104L4 11.741v6.585c1.435.779 4.514 2.179 8 2.179 3.486 0 6.565-1.4 8-2.179v-6.585l-.098-.104s-.033.045-.085.104c-.793.9-2.057 1.259-3.782 1.259-1.59 0-2.738-.545-3.508-1.492a4.323 4.323 0 0 1-.355-.508h-.016.016Zm.641-2.935c.136 1.057.403 1.913.878 2.497.442.544 1.134.938 2.344.938 1.573 0 2.292-.337 2.657-.751.384-.435.558-1.15.558-2.361 0-1.14-.243-1.847-.705-2.319-.477-.488-1.319-.862-2.824-1.025-1.487-.161-2.192.138-2.533.529-.269.307-.437.808-.438 1.578v.021c0 .265.021.562.063.893Zm-1.626 0c.042-.331.063-.628.063-.894v-.02c-.001-.77-.169-1.271-.438-1.578-.341-.391-1.046-.69-2.533-.529-1.505.163-2.347.537-2.824 1.025-.462.472-.705 1.179-.705 2.319 0 1.211.175 1.926.558 2.361.365.414 1.084.751 2.657.751 1.21 0 1.902-.394 2.344-.938.475-.584.742-1.44.878-2.497Z%22/%3E%3Cpath d=%22M14.5 14.25a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1Zm-5 0a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1Z%22/%3E%3C/svg%3E">
 <script>
 // Runs before first paint so the saved theme doesn't flash in late.
 let theme = "hud";
@@ -22,7 +23,7 @@ document.documentElement.dataset.theme = theme;
   --text: #0a1020; --text-2: #46536e; --muted: #64708a;
   --grid: #dde4f0; --axis: #b9c4d8; --border: rgba(20,60,120,.14);
   --accent: #0b6fd6; --accent-2: #6b3fe0;
-  --premium: #1877e0; --standard: #e2622b; --light: #0f9f70;
+  --high: #1877e0; --medium: #e2622b; --low: #0f9f70;
   --live: #0f9f70; --neutral: #7c89a6; --focus: #0b6fd6;
   --danger: #c4322a; --warn: #8f5b00; --ok: #0f7f52;
   --hero: linear-gradient(90deg, var(--text), var(--accent));
@@ -37,7 +38,7 @@ document.documentElement.dataset.theme = theme;
   --text: #e8f1ff; --text-2: #9db0d0; --muted: #7a8cae;
   --grid: #1a2640; --axis: #2b3b5e; --border: rgba(120,190,255,.16);
   --accent: #4cc2ff; --accent-2: #a06bff;
-  --premium: #4cc2ff; --standard: #ff8a4c; --light: #2ee6a6;
+  --high: #4cc2ff; --medium: #ff8a4c; --low: #2ee6a6;
   --live: #2ee6a6; --neutral: #8193ba; --focus: #8fd8ff;
   --danger: #ff5d6c; --warn: #ffb547; --ok: #2ee6a6;
   --hero: linear-gradient(90deg, #ffffff 20%, var(--accent));
@@ -57,7 +58,7 @@ document.documentElement.dataset.theme = theme;
   --text: #fdeaff; --text-2: #cfaee6; --muted: #a184bd;
   --grid: #2c1648; --axis: #44236b; --border: rgba(255,110,230,.2);
   --accent: #ff4fd8; --accent-2: #ffb347;
-  --premium: #ff4fd8; --standard: #ffb347; --light: #3df5ff;
+  --high: #ff4fd8; --medium: #ffb347; --low: #3df5ff;
   --live: #3df5ff; --neutral: #a58bd0; --focus: #ff9bea;
   --danger: #ff5d6c; --warn: #ffd166; --ok: #3df5ff;
   --hero: linear-gradient(90deg, #ffb347, #ff4fd8 55%, #a06bff);
@@ -77,7 +78,7 @@ document.documentElement.dataset.theme = theme;
   --text: #c8ffd4; --text-2: #7fd69a; --muted: #5aa873;
   --grid: #0f2417; --axis: #1c4029; --border: rgba(80,255,140,.22);
   --accent: #4dff88; --accent-2: #4dff88;
-  --premium: #4dff88; --standard: #ffb000; --light: #38d6ff;
+  --high: #4dff88; --medium: #ffb000; --low: #38d6ff;
   --live: #4dff88; --neutral: #4f9a68; --focus: #b6ffcb;
   --danger: #ff5d5d; --warn: #ffb000; --ok: #4dff88;
   --hero: linear-gradient(var(--accent), var(--accent));
@@ -92,7 +93,7 @@ document.documentElement.dataset.theme = theme;
   --text: #fff; --text-2: #c3c2b7; --muted: #898781;
   --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10);
   --accent: #3987e5; --accent-2: #3987e5;
-  --premium: #3987e5; --standard: #d95926; --light: #199e70;
+  --high: #3987e5; --medium: #d95926; --low: #199e70;
   --live: #0ca30c; --neutral: #898781; --focus: #6aa7f0;
   --danger: #f0655a; --warn: #e0a030; --ok: #35b57c;
   --hero: linear-gradient(var(--text), var(--text));
@@ -105,7 +106,7 @@ document.documentElement.dataset.theme = theme;
   --text: #eceff4; --text-2: #d8dee9; --muted: #a9b3c6;
   --grid: #434c5e; --axis: #4c566a; --border: rgba(216,222,233,.12);
   --accent: #88c0d0; --accent-2: #81a1c1;
-  --premium: #88c0d0; --standard: #d08770; --light: #a3be8c;
+  --high: #88c0d0; --medium: #d08770; --low: #a3be8c;
   --live: #a3be8c; --neutral: #8f9bb3; --focus: #8fbcbb;
   --danger: #e58f98; --warn: #ebcb8b; --ok: #a3be8c;
   --hero: linear-gradient(var(--text), var(--text));
@@ -118,7 +119,7 @@ document.documentElement.dataset.theme = theme;
   --text: #fff1e6; --text-2: #d9b8a3; --muted: #a88a78;
   --grid: #2e1e17; --axis: #4a3024; --border: rgba(255,150,90,.18);
   --accent: #ff7a3d; --accent-2: #ffc15e;
-  --premium: #ff6b3d; --standard: #ffc15e; --light: #6fd6c4;
+  --high: #ff6b3d; --medium: #ffc15e; --low: #6fd6c4;
   --live: #6fd6c4; --neutral: #b0907c; --focus: #ffb38f;
   --danger: #ff4d6d; --warn: #ffc15e; --ok: #6fd6c4;
   --hero: linear-gradient(90deg, #ffc15e, #ff6b3d);
@@ -136,7 +137,7 @@ document.documentElement.dataset.theme = theme;
   --text: #f2f8ff; --text-2: #bcd6f5; --muted: #9bbde8;
   --grid: #2a5a99; --axis: #5d8ac4; --border: rgba(255,255,255,.35); --hover: rgba(255,255,255,.12);
   --accent: #ffffff; --accent-2: #9fd0ff;
-  --premium: #ffffff; --standard: #ffd166; --light: #7ee0ff;
+  --high: #ffffff; --medium: #ffd166; --low: #7ee0ff;
   --live: #7ee0ff; --neutral: #8fb4e3; --focus: #ffd166;
   --danger: #ffa3a3; --warn: #ffd166; --ok: #9ff0c0;
   --hero: linear-gradient(var(--text), var(--text));
@@ -154,7 +155,7 @@ document.documentElement.dataset.theme = theme;
   --text: #000; --text-2: #2b2b2b; --muted: #555;
   --grid: #d9d5cb; --axis: #000; --border: #000; --hover: rgba(0,0,0,.08);
   --accent: #1d3fd8; --accent-2: #1d3fd8;
-  --premium: #1d3fd8; --standard: #e0311f; --light: #00916e;
+  --high: #1d3fd8; --medium: #e0311f; --low: #00916e;
   --live: #00916e; --neutral: #1a1a1a; --focus: #1d3fd8;
   --danger: #c7271a;
   --hero: linear-gradient(var(--text), var(--text));
@@ -167,7 +168,7 @@ document.documentElement.dataset.theme = theme;
   --text: #fff; --text-2: #d4d4d4; --muted: #a3a3a3;
   --grid: #2a2a2a; --axis: #fff; --border: #fff; --hover: rgba(255,255,255,.1);
   --accent: #ffe600; --accent-2: #ffe600;
-  --premium: #5b7cff; --standard: #ff4a36; --light: #00d19f;
+  --high: #5b7cff; --medium: #ff4a36; --low: #00d19f;
   --live: #00d19f; --neutral: #e5e5e5; --focus: #ffe600;
   --danger: #ff6b5c; --warn: #ffc94d; --ok: #35d6a0;
   --hero: linear-gradient(var(--text), var(--text));
@@ -179,7 +180,7 @@ document.documentElement.dataset.theme = theme;
   --text: #2a1540; --text-2: #5f4b7a; --muted: #7a6894;
   --grid: #efe0f7; --axis: #d5bfe6; --border: rgba(140,80,200,.18);
   --accent: #c026d3; --accent-2: #6d5efc;
-  --premium: #a855f7; --standard: #ec4899; --light: #0d9488;
+  --high: #a855f7; --medium: #ec4899; --low: #0d9488;
   --live: #0d9488; --neutral: #9d8bb8; --focus: #c026d3;
   --hero: linear-gradient(90deg, #c026d3, #6d5efc);
   --backdrop:
@@ -194,7 +195,7 @@ document.documentElement.dataset.theme = theme;
   --text: #0b0b0b; --text-2: #52514e; --muted: #6f6d68;
   --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10);
   --accent: #2a78d6; --accent-2: #2a78d6;
-  --premium: #2a78d6; --standard: #eb6834; --light: #1baf7a;
+  --high: #2a78d6; --medium: #eb6834; --low: #1baf7a;
   --live: #0ca30c; --neutral: #898781;  --focus: #2a78d6;
   --hero: linear-gradient(var(--text), var(--text));
   --card-glow: none; --card-glow-hover: none;
@@ -218,7 +219,7 @@ h2::before { content: ""; width: 3px; height: 12px; border-radius: 2px; backgrou
 .sub { color: var(--text-2); font-size: 13px; margin: 0 0 12px; }
 .status { color: var(--text-2); font-size: 13px; display: flex; align-items: center; gap: 8px; }
 .status { font-family: var(--head); font-size: 12px; }
-.tools { display: flex; align-items: center; gap: 16px; }
+.tools { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; justify-content: flex-end; }
 .ghost { font: inherit; font-size: 13px; color: var(--text-2); background: none; border: 1px solid var(--border); border-radius: 6px;
   padding: 5px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: color .2s, border-color .2s; }
 .ghost:hover { color: var(--text); border-color: var(--accent); }
@@ -262,6 +263,21 @@ dialog legend { padding: 0; margin-bottom: 2px; font-weight: 600; }
 .filters .on { border-color: var(--accent); box-shadow: var(--lit) color-mix(in srgb, var(--accent) 40%, transparent); }
 .filters select:hover, .filters input:hover { border-color: var(--accent); }
 .filters .gap { width: 12px; }
+.tools .filters { margin: 0; flex-wrap: nowrap; }
+.filters .dates { display: flex; gap: 4px; }
+.mix { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.mix-item { display: flex; gap: 20px; align-items: center; }
+.mix-item svg { width: 150px; flex: none; }
+.mix-item .slice { stroke-width: 20px; transition: stroke-width .15s; }
+.mix-item .slice:hover, .mix-item .slice:focus-visible { stroke-width: 26px; outline: none; }
+.mix-item text.total { fill: var(--text); font: 600 20px var(--num); }
+.mix-legend { display: grid; gap: 4px; flex: 1; min-width: 0; font-size: 13px; }
+.mix-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.2em; gap: 8px; align-items: center; padding: 2px 4px; border-radius: 4px; }
+.mix-row.pick:hover, .mix-row.pick:focus-visible { background: var(--hover); }
+.mix-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mix-row b { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.mix-row span:last-child { color: var(--text-2); text-align: right; font-variant-numeric: tabular-nums; }
+.filters .seg-label { color: var(--text-2); font-size: 12px; margin-right: 2px; }
 .filters .clear { text-decoration: underline; }
 .filters .push { margin-left: auto; display: flex; gap: 4px; }
 .filters .chip { color: var(--text); background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: var(--accent); border-radius: 999px; }
@@ -319,13 +335,13 @@ h3 { font: 600 12px var(--head); letter-spacing: calc(.08em * var(--track)); tex
 .stack { display: grid; gap: 12px; margin-top: 12px; }
 .stack > *, .grid > * { min-width: 0; }
 @media (max-width: 820px) {
-  .kpis, .grid { grid-template-columns: 1fr; }
+  .kpis, .grid, .mix { grid-template-columns: 1fr; }
   .breakdowns { grid-template-columns: 1fr 1fr; }
   .kpi-grid .kpi { grid-column: span 6; }
   .kpi-grid .kpi.wide { grid-column: span 12; }
   .clip, .clip.narrow { max-width: 150px; }
 }
-@media (max-width: 520px) { .breakdowns { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .breakdowns { grid-template-columns: 1fr; } .mix-item { flex-direction: column; align-items: stretch; } .mix-item svg { align-self: center; } }
 
 .legend { display: flex; gap: 16px; color: var(--text-2); font-size: 13px; margin-bottom: 8px; flex-wrap: wrap; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
@@ -383,6 +399,7 @@ th button:hover, th[aria-sort] button { color: var(--text); }
       <h1>Copilot CLI usage</h1>
       <div class="tools">
         <div class="status" id="status"><span class="pulse"></span><span id="updated">Loading usage data</span></div>
+        <div class="filters" id="measure" role="group" aria-label="Show spend or calls"></div>
         <button type="button" class="ghost" id="open-settings" aria-haspopup="dialog">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h6m4 0h2M2 12h2m4 0h6"/><circle cx="10" cy="4" r="2"/><circle cx="6" cy="12" r="2"/></svg>
           Settings
@@ -406,7 +423,7 @@ th button:hover, th[aria-sort] button { color: var(--text); }
       <div class="note" id="k-spend-pace"></div>
     </div>
     <div class="kpi-grid">
-      <div class="card kpi wide"><div class="label">Premium share of spend</div><div class="value" id="k-share">-</div><div class="note" id="k-share-note"></div><div class="split" id="k-split"></div></div>
+      <div class="card kpi wide"><div class="label" id="k-share-label">High tier share of spend</div><div class="value" id="k-share">-</div><div class="note" id="k-share-note"></div><div class="split" id="k-split"></div></div>
       <div class="card kpi"><div class="label">Model calls</div><div class="value" id="k-calls">-</div><div class="note" id="k-calls-note"></div></div>
       <div class="card kpi"><div class="label">AIC per call</div><div class="value" id="k-rate">-</div><div class="note" id="k-rate-note"></div></div>
       <div class="card kpi"><div class="label">Prompts you sent</div><div class="value" id="k-prompts">-</div><div class="note" id="k-prompts-note"></div></div>
@@ -426,22 +443,33 @@ th button:hover, th[aria-sort] button { color: var(--text); }
       <div class="chart" id="cache-rate"></div>
     </div>
     <div class="card">
-      <h2>Spend by model</h2>
-      <p class="sub">AI credits, colored by tier. Click a model to filter by it.</p>
+      <h2 id="models-title">Spend by model</h2>
+      <p class="sub" id="models-sub"></p>
       <div class="chart" id="models"></div>
     </div>
   </section>
 
   <section class="stack">
     <div class="card">
-      <h2>Where the spend goes</h2>
-      <p class="sub">AI credits by each dimension. Click a bar to filter by it. Token type splits the bill by what was charged for.</p>
+      <h2>Model mix</h2>
+      <p class="sub">Each model's share of spend and of calls, colored by tier. Shades tell models in the same tier apart. Click a model to filter by it.</p>
+      <div class="mix">
+        <div><h3>Spend</h3><div class="mix-item" id="mix-aic"></div></div>
+        <div><h3>Calls</h3><div class="mix-item" id="mix-calls"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2 id="breakdown-title">Where the spend goes</h2>
+      <p class="sub" id="breakdown-sub"></p>
       <div class="breakdowns">
         <div><h3>Repository</h3><div class="chart" id="by-repo"></div></div>
         <div><h3>Branch</h3><div class="chart" id="by-branch"></div></div>
         <div><h3>Reasoning effort</h3><div class="chart" id="by-effort"></div></div>
         <div><h3>Initiator</h3><div class="chart" id="by-initiator"></div></div>
-        <div><h3>Token type</h3><div class="chart" id="by-tokens"></div></div>
+        <div id="tokens-block"><h3>Token type</h3><div class="chart" id="by-tokens"></div></div>
         <div><h3>API endpoint</h3><div class="chart" id="by-endpoint"></div></div>
         <div><h3>Finish reason</h3><div class="chart" id="by-finish"></div></div>
         <div><h3>Host</h3><div class="chart" id="by-host"></div></div>
@@ -452,8 +480,8 @@ th button:hover, th[aria-sort] button { color: var(--text); }
 
   <section class="grid">
     <div class="card">
-      <h2>When the spend happens</h2>
-      <p class="sub">AI credits by weekday and hour of day, local time.</p>
+      <h2 id="heatmap-title">When the spend happens</h2>
+      <p class="sub" id="heatmap-sub"></p>
       <div class="chart" id="heatmap"></div>
     </div>
     <div class="card">
@@ -495,8 +523,14 @@ th button:hover, th[aria-sort] button { color: var(--text); }
 <div id="tip"></div>
 
 <script>
-const TIERS = ["premium", "standard", "light"];
-const TIER_LABEL = { premium: "Premium", standard: "Standard", light: "Light" };
+const TIERS = ["high", "medium", "low"];
+const TIER_LABEL = { high: "High", medium: "Medium", low: "Low" };
+const MEASURE_OPTIONS = [["aic", "Spend"], ["calls", "Calls"]];
+const MEASURE_TEXT = {
+  aic: { unit: "AIC", noun: "spend", what: "AI credits" },
+  calls: { unit: "calls", noun: "calls", what: "Model calls" },
+};
+const MIX_SLICES = 6;
 const RANGES = [
   { id: "today", label: "Today", start: now => now },
   { id: "7d", label: "Last 7 days", start: now => addDays(now, -6) },
@@ -534,7 +568,7 @@ const DIMS = [
 const dim = id => DIMS.find(d => d.id === id);
 
 let data = null, server = {}, version = "", showAllSessions = false;
-let range = "month", custom = { from: "", to: "" }, picked = {};
+let range = "month", custom = { from: "", to: "" }, picked = {}, measure = "aic";
 let filtersOpen = false;
 const sortState = {};
 try { filtersOpen = localStorage.getItem("filtersOpen") === "1"; } catch {}
@@ -544,12 +578,14 @@ function readState(text) {
   range = params.get("range") || "month";
   if (range !== "custom" && !RANGES.some(r => r.id === range)) range = "month";
   custom = { from: params.get("from") || "", to: params.get("to") || "" };
+  measure = params.get("by") === "calls" ? "calls" : "aic";
   picked = {};
   for (const d of DIMS) if (params.get(d.id)) picked[d.id] = params.get(d.id);
 }
 function remember() {
   const params = new URLSearchParams({ range });
   if (range === "custom") { params.set("from", custom.from); params.set("to", custom.to); }
+  if (measure !== "aic") params.set("by", measure);
   for (const [id, value] of Object.entries(picked)) params.set(id, value);
   history.replaceState(null, "", "#" + params);
   try { localStorage.setItem("state", params.toString()); } catch {}
@@ -668,7 +704,7 @@ function renderThemes() {
     input.checked = t.id === theme;
     input.addEventListener("change", () => setTheme(t.id));
     const mini = el("div", { class: "mini" });
-    [["premium", 90], ["premium", 35], ["standard", 20], ["light", 55], ["premium", 70]].forEach(([tier, height]) => {
+    [["high", 90], ["high", 35], ["medium", 20], ["low", 55], ["high", 70]].forEach(([tier, height]) => {
       const bar = el("i");
       bar.style.color = css(tier); bar.style.height = height + "%";
       mini.append(bar);
@@ -746,25 +782,27 @@ function timeSlots(days) {
 function renderSpend(rows, days) {
   const host = byId("daily");
   const { hourly, slotOf, slots } = timeSlots(days);
-  byId("daily-title").textContent = hourly ? "Hourly spend by tier" : "Daily spend by tier";
+  const byCalls = measure === "calls", { unit, noun, what } = MEASURE_TEXT[measure];
+  byId("daily-title").textContent = `${hourly ? "Hourly" : "Daily"} ${noun} by tier`;
+  const price = byCalls ? "" : " 1 AIC = $0.01.";
   byId("daily-sub").textContent = hourly
-    ? `AI credits per hour on ${shortDay(days[0])}. 1 AIC = $0.01.`
-    : "AI credits per day. 1 AIC = $0.01. Click a day to see it by hour.";
+    ? `${what} per hour on ${shortDay(days[0])}.${price}`
+    : `${what} per day.${price} Click a day to see it by hour.`;
 
   const W = host.clientWidth || 600, H = 240, m = PLOT;
   const plotW = W - m.left - m.right, plotH = H - m.top - m.bottom;
-  const bySlot = new Map(slots.map(slot => [slot.key, { premium: 0, standard: 0, light: 0 }]));
-  for (const r of rows) if (bySlot.has(slotOf(r))) bySlot.get(slotOf(r))[r.tier] += r.aic;
+  const bySlot = new Map(slots.map(slot => [slot.key, Object.fromEntries(TIERS.map(t => [t, 0]))]));
+  for (const r of rows) if (bySlot.has(slotOf(r))) bySlot.get(slotOf(r))[r.tier] += r[measure];
   for (const v of bySlot.values()) for (const t of TIERS) v[t] = Math.max(0, v[t]);
 
   const now = new Date();
-  const dailyBudget = server.budget && range === "month" && !hourly
+  const dailyBudget = server.budget && range === "month" && !hourly && !byCalls
     ? server.budget / new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() : 0;
-  const top = niceMax(Math.max(dailyBudget, ...[...bySlot.values()].map(v => v.premium + v.standard + v.light)));
+  const top = niceMax(Math.max(dailyBudget, ...[...bySlot.values()].map(v => TIERS.reduce((a, t) => a + v[t], 0))));
   const y = v => m.top + plotH - (v / top) * plotH;
   const slotW = plotW / slots.length;
   const barW = Math.max(2, Math.min(24, slotW - 2));
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": "Spend by tier over time" });
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": `${byCalls ? "Calls" : "Spend"} by tier over time` });
 
   for (let i = 0; i <= 4; i++) {
     const v = (top / 4) * i;
@@ -787,7 +825,7 @@ function renderSpend(rows, days) {
     if (i % labelEvery === 0) svg.append(s("text", { x: cx, y: H - 6, "text-anchor": "middle" }, slot.label));
 
     const hit = s("rect", { class: "hit", x: m.left + slotW * i, y: m.top, width: slotW, height: plotH });
-    hoverable(hit, `${slot.label} · ${fmt(base)} AIC`,
+    hoverable(hit, `${slot.label} · ${fmt(base)} ${unit}`,
       TIERS.map(t => ({ color: css(t), value: fmt(values[t]), label: TIER_LABEL[t] })));
     if (!hourly) clickable(hit, () => { custom = { from: slot.key, to: slot.key }; range = "custom"; remember(); render(); });
     svg.append(hit);
@@ -848,22 +886,24 @@ function renderCacheRate(rows, slots, slotOf) {
 }
 
 function renderBars(hostId, label, entries, total, limit = 6) {
-  const host = byId(hostId);
-  const ranked = entries.filter(e => e.aic > 0.5).sort((a, b) => b.aic - a.aic);
-  if (!ranked.length) return host.replaceChildren(el("div", { class: "empty" }, "No spend"));
+  const host = byId(hostId), { unit, noun } = MEASURE_TEXT[measure];
+  const ranked = entries.filter(e => e[measure] > 0.5).sort((a, b) => b[measure] - a[measure]);
+  if (!ranked.length) return host.replaceChildren(el("div", { class: "empty" }, "No " + noun));
   const shown = ranked.slice(0, limit);
   const W = host.clientWidth || 300, rowH = 36, H = shown.length * rowH, valueRoom = 92;
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": "Spend by " + label });
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": `${noun} by ${label}` });
   shown.forEach((entry, i) => {
-    const y0 = i * rowH, w = Math.max(2, (entry.aic / shown[0].aic) * (W - valueRoom));
+    const value = entry[measure];
+    const y0 = i * rowH, w = Math.max(2, (value / shown[0][measure]) * (W - valueRoom));
     const name = s("text", { class: "name", x: 0, y: y0 + 12 }, clip(entry.name, W));
     if (entry.active) name.style.fontWeight = 600;
     svg.append(name);
     svg.append(s("path", { class: entry.color ? "mark" : "", d: roundedRight(0, y0 + 17, w, 10, 4), fill: "currentColor", style: `color:${entry.color || css("neutral")}` }));
-    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 26 }, `${fmt(entry.aic)} · ${pct(entry.aic / total)}`));
+    svg.append(s("text", { class: "val", x: w + 6, y: y0 + 26 }, `${fmt(value)} · ${pct(value / total)}`));
     const hit = s("rect", { class: "hit", x: 0, y: y0, width: W, height: rowH - 2, rx: 4 });
-    const lines = [{ color: entry.color || css("neutral"), value: fmt(entry.aic) + " AIC", label: pct(entry.aic / total) + " of spend" }];
-    if (entry.calls != null) lines.push({ value: fmt(entry.calls), label: "calls" });
+    const lines = [{ color: entry.color || css("neutral"), value: `${fmt(value)} ${unit}`, label: `${pct(value / total)} of ${noun}` }];
+    const other = measure === "calls" ? "aic" : "calls";
+    if (entry[other] != null) lines.push({ value: fmt(entry[other]), label: MEASURE_TEXT[other].unit });
     hoverable(hit, entry.title || entry.name, lines);
     if (entry.onPick) clickable(hit, entry.onPick);
     svg.append(hit);
@@ -875,7 +915,7 @@ function renderBars(hostId, label, entries, total, limit = 6) {
 
 function dimEntries(d, rows, colorOf) {
   return [...sumBy(rows, r => r[d.id])].map(([value, v]) => ({
-    name: d.show(value), title: value, aic: v.aic, calls: v.calls, color: colorOf?.(v),
+    name: d.show(value), title: value, aic: v.aic, calls: v.calls, color: colorOf?.(value),
     active: picked[d.id] === value, onPick: () => toggle(d.id, value),
   }));
 }
@@ -890,7 +930,8 @@ function renderTokenKinds(rows, total) {
 function renderHeatmap(rows) {
   const host = byId("heatmap");
   const cells = sumBy(rows, r => r.weekday * 24 + r.hour);
-  const max = Math.max(0, ...[...cells.values()].map(v => v.aic));
+  const { unit } = MEASURE_TEXT[measure], other = measure === "calls" ? "aic" : "calls";
+  const max = Math.max(0, ...[...cells.values()].map(v => v[measure]));
   const W = host.clientWidth || 600, left = 36, topRoom = 16, gap = 2;
   const size = (W - left) / 24, H = topRoom + size * 7;
   const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": "Spend by weekday and hour" });
@@ -898,20 +939,85 @@ function renderHeatmap(rows) {
   WEEKDAYS.forEach((name, d) => {
     svg.append(s("text", { x: 0, y: topRoom + size * d + size / 2 + 4 }, name));
     for (let h = 0; h < 24; h++) {
-      const v = cells.get(d * 24 + h), aic = Math.max(0, v?.aic || 0);
+      const v = cells.get(d * 24 + h), value = Math.max(0, v?.[measure] || 0);
       const cell = s("rect", { x: left + size * h + gap / 2, y: topRoom + size * d + gap / 2, width: size - gap, height: size - gap, rx: 3,
-        class: aic > 0.5 ? "mark" : "", style: `color:${css("premium")}`,
-        fill: aic > 0.5 ? "currentColor" : css("grid"), "fill-opacity": aic > 0.5 ? 0.12 + 0.88 * (aic / max) : 0.6 });
+        class: value > 0.5 ? "mark" : "", style: `color:${css("high")}`,
+        fill: value > 0.5 ? "currentColor" : css("grid"), "fill-opacity": value > 0.5 ? 0.12 + 0.88 * (value / max) : 0.6 });
       hoverable(cell, `${name} ${String(h).padStart(2, "0")}:00`, [
-        { color: css("premium"), value: fmt(aic) + " AIC", label: v ? `${fmt(v.calls)} calls` : "no calls" }]);
+        { color: css("high"), value: `${fmt(value)} ${unit}`, label: v ? `${fmt(v[other])} ${MEASURE_TEXT[other].unit}` : "no calls" }]);
       svg.append(cell);
     }
   });
   roving(svg, 24);
   host.replaceChildren(svg);
   const scale = el("div", { class: "legend scale" });
-  scale.append("0", ...[0.12, 0.4, 0.7, 1].map(o => { const sw = swatch(css("premium")); sw.style.opacity = o; return sw; }), fmt(max) + " AIC per hour slot");
+  scale.append("0", ...[0.12, 0.4, 0.7, 1].map(o => { const sw = swatch(css("high")); sw.style.opacity = o; return sw; }), `${fmt(max)} ${unit} per hour slot`);
   host.append(scale);
+}
+
+// Models in the same tier share a hue and differ by strength, fixed by name so a model keeps its color under any filter.
+function modelColor(model, tier = data.tiers[model]) {
+  if (!tier) return css("neutral");
+  const peers = Object.keys(data.tiers).filter(m => data.tiers[m] === tier).sort();
+  const strength = 1 - 0.6 * Math.max(0, peers.indexOf(model)) / Math.max(1, peers.length - 1);
+  return `color-mix(in srgb, ${css(tier)} ${Math.round(strength * 100)}%, transparent)`;
+}
+
+function mixSlices(byModel, field) {
+  const ranked = [...byModel].map(([model, v]) => ({ model, tier: v.tier, value: Math.max(0, v[field]) }))
+    .filter(e => e.value > 0).sort((a, b) => b.value - a.value);
+  const kept = ranked.length > MIX_SLICES ? ranked.slice(0, MIX_SLICES - 1) : ranked;
+  kept.sort((a, b) => TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier) || b.value - a.value);
+  const rest = ranked.slice(kept.length);
+  if (rest.length) kept.push({ model: `${rest.length} others`, value: rest.reduce((a, e) => a + e.value, 0) });
+  return kept;
+}
+
+function renderDonut(hostId, byModel, field) {
+  const host = byId(hostId), { unit, noun } = MEASURE_TEXT[field];
+  const slices = mixSlices(byModel, field), total = slices.reduce((a, e) => a + e.value, 0);
+  if (!total) return host.replaceChildren(el("div", { class: "empty" }, "No " + noun));
+  const size = 150, c = size / 2, r = 58, around = 2 * Math.PI * r, gap = slices.length > 1 ? 2 : 0;
+  const svg = s("svg", { viewBox: `0 0 ${size} ${size}`, height: size, role: "group", "aria-label": `Share of ${noun} by model` });
+  const legend = el("div", { class: "mix-legend" });
+  let start = 0;
+  for (const slice of slices) {
+    const color = slice.tier ? modelColor(slice.model) : css("neutral");
+    const length = slice.value / total * around;
+    const arc = s("circle", { class: "slice mark", cx: c, cy: c, r, fill: "none", stroke: "currentColor",
+      style: `color:${color}`, "stroke-dasharray": `${Math.max(0, length - gap)} ${around}`, "stroke-dashoffset": -start,
+      transform: `rotate(-90 ${c} ${c})` });
+    hoverable(arc, slice.model, [{ color, value: `${fmt(slice.value)} ${unit}`, label: `${pct(slice.value / total)} of ${noun}` }]);
+    const row = el("div", { class: "mix-row" });
+    const name = el("span", { class: "name", title: slice.model });
+    name.append(swatch(color), slice.model);
+    row.append(name, el("b", {}, fmt(slice.value)), el("span", {}, pct(slice.value / total)));
+    if (slice.tier) {
+      const onPick = () => toggle("model", slice.model);
+      clickable(arc, onPick);
+      clickable(row, onPick);
+      row.setAttribute("tabindex", "0");
+    }
+    svg.append(arc);
+    legend.append(row);
+    start += length;
+  }
+  svg.append(s("text", { class: "total", x: c, y: c + 4, "text-anchor": "middle" }, fmt(total)),
+    s("text", { x: c, y: c + 22, "text-anchor": "middle" }, unit));
+  roving(svg);
+  host.replaceChildren(svg, legend);
+}
+
+function renderMeasureText() {
+  const { noun, what } = MEASURE_TEXT[measure], byCalls = measure === "calls";
+  byId("models-title").textContent = byCalls ? "Calls by model" : "Spend by model";
+  byId("models-sub").textContent = `${what}, colored by tier. Click a model to filter by it.`;
+  byId("breakdown-title").textContent = byCalls ? "Where the calls go" : "Where the spend goes";
+  byId("breakdown-sub").textContent = `${what} by each dimension. Click a bar to filter by it.`
+    + (byCalls ? "" : " Token type splits the bill by what was charged for.");
+  byId("tokens-block").hidden = byCalls;
+  byId("heatmap-title").textContent = byCalls ? "When the calls happen" : "When the spend happens";
+  byId("heatmap-sub").textContent = `${what} by weekday and hour of day, local time.`;
 }
 
 function renderKpis(rows, previous, days, byTier) {
@@ -953,24 +1059,29 @@ function renderKpis(rows, previous, days, byTier) {
   }
   byId("k-spend-pace").textContent = pace;
 
-  byId("k-share").textContent = total > 0 ? pct(tierAic("premium") / total) : "-";
-  let shareNote = calls ? `${pct(tierCalls("premium") / calls)} of calls went to premium models.` : "";
-  const p = byTier.get("premium"), std = byTier.get("standard");
-  if (p?.calls && std?.calls) {
-    const saving = p.aic - p.calls * (std.aic / std.calls);
-    if (saving > 0.5) shareNote += ` At the standard rate per call they'd cost ${fmt(saving)} AIC less.`;
+  const byCalls = measure === "calls";
+  const tierShare = t => byCalls ? tierCalls(t) / calls : tierAic(t) / total;
+  byId("k-share-label").textContent = `High tier share of ${byCalls ? "calls" : "spend"}`;
+  byId("k-share").textContent = (byCalls ? calls : total > 0) ? pct(tierShare("high")) : "-";
+  let shareNote = byCalls
+    ? total > 0 ? `${pct(tierAic("high") / total)} of spend went to high tier models.` : ""
+    : calls ? `${pct(tierCalls("high") / calls)} of calls went to high tier models.` : "";
+  const p = byTier.get("high"), mid = byTier.get("medium");
+  if (p?.calls && mid?.calls) {
+    const saving = p.aic - p.calls * (mid.aic / mid.calls);
+    if (saving > 0.5) shareNote += ` At the medium tier rate per call they'd cost ${fmt(saving)} AIC less.`;
   }
   byId("k-share-note").textContent = shareNote;
-  byId("k-split").replaceChildren(...TIERS.filter(t => tierAic(t) > 0).map(t => {
-    const seg = el("span", { title: `${TIER_LABEL[t]} ${pct(tierAic(t) / total)}` });
-    seg.style.flex = tierAic(t); seg.style.background = css(t);
+  byId("k-split").replaceChildren(...TIERS.filter(t => tierShare(t) > 0).map(t => {
+    const seg = el("span", { title: `${TIER_LABEL[t]} ${pct(tierShare(t))}` });
+    seg.style.flex = tierShare(t); seg.style.background = css(t);
     return seg;
   }));
 
   byId("k-calls").textContent = fmt(calls);
-  byId("k-calls-note").textContent = calls ? `${pct((tierCalls("standard") + tierCalls("light")) / calls)} on cheaper tiers` : "";
+  byId("k-calls-note").textContent = calls ? `${pct((tierCalls("medium") + tierCalls("low")) / calls)} on cheaper tiers` : "";
   byId("k-rate").textContent = calls ? (closedAic / calls).toFixed(1) : "-";
-  byId("k-rate-note").textContent = p?.calls ? `${(p.aic / p.calls).toFixed(1)} on premium` : "";
+  byId("k-rate-note").textContent = p?.calls ? `${(p.aic / p.calls).toFixed(1)} on high tier` : "";
 
   const detailed = rows.filter(r => r.initiator !== "unknown");
   const detailedAic = totalOf(detailed, "aic"), detailedCalls = totalOf(detailed, "calls");
@@ -1037,7 +1148,7 @@ function renderModelTable(byModel, total) {
       "Cache write (M)", "Output (M)", "Reasoning (M)", "AIC / M output"], 2,
     sortLines("table", ranked.map(([model, v]) => ({
       active: picked.model === model, onPick: () => toggle("model", model),
-      cells: [named(css(v.tier), model), TIER_LABEL[v.tier], cell(v.aic, fmt(v.aic)), total > 0 ? cell(v.aic / total, pct(v.aic / total)) : cell(null, "-"),
+      cells: [named(modelColor(model), model), TIER_LABEL[v.tier], cell(v.aic, fmt(v.aic)), total > 0 ? cell(v.aic / total, pct(v.aic / total)) : cell(null, "-"),
         cell(v.calls, fmt(v.calls)), v.calls ? cell(v.aic / v.calls, (v.aic / v.calls).toFixed(1)) : cell(null, "-"), num(v.prompts), num(v.premium),
         cell(v.in, millions(1)(v.in)), v.in ? cell(v.cache / v.in, pct(v.cache / v.in)) : cell(null, "-"), cell(v.cache_write, millions(1)(v.cache_write)),
         cell(v.out, millions(2)(v.out)), cell(v.reasoning, millions(2)(v.reasoning)), v.out ? num(v.aic / (v.out / 1e6)) : cell(null, "-")],
@@ -1050,7 +1161,7 @@ function renderSpeedTable(rows, byModel) {
     const own = rows.filter(r => r.model === model);
     const dur = quantiles(own, "dur"), ttft = quantiles(own, "ttft"), ottft = quantiles(own, "ottft");
     if (!dur.n) return null;
-    return { cells: [named(css(v.tier), model), cell(dur.n, fmt(dur.n)), time(v.ms / dur.n), time(dur.p50), time(dur.p95),
+    return { cells: [named(modelColor(model), model), cell(dur.n, fmt(dur.n)), time(v.ms / dur.n), time(dur.p50), time(dur.p95),
       time(ttft.p50), time(ttft.p95), time(ottft.p50), v.itl_n ? num(v.itl / v.itl_n) : cell(null, "-"),
       v.ms ? num(v.out_timed / (v.ms / 1000)) : cell(null, "-")] };
   }).filter(Boolean);
@@ -1086,7 +1197,7 @@ function renderSessionTable(rows) {
     const session = data.sessions[id] || {};
     const models = [...topModel.get(id)].sort((a, b) => b[1] - a[1]);
     const model = models[0][0] + (models.length > 1 ? ` +${models.length - 1}` : "");
-    const cells = [named(css(data.tiers[models[0][0]]), sessionLabel(id)),
+    const cells = [named(modelColor(models[0][0]), sessionLabel(id)),
       dim("repo").show(session.repo || "-"), clipped(session.branch || "-"), model, cell(v.aic, fmt(v.aic)), num(v.prompts), cell(v.calls, fmt(v.calls)),
       v.prompts ? cell(v.aic / v.prompts, (v.aic / v.prompts).toFixed(1)) : cell(null, "-"),
       v.aic > 0 ? cell((subAic.get(id)?.aic || 0) / v.aic, pct((subAic.get(id)?.aic || 0) / v.aic)) : cell(null, "-"),
@@ -1120,7 +1231,7 @@ function renderOpenSessions() {
   host.replaceChildren(...server.active.map(a => {
     const row = el("div", { class: "session", tabindex: "0" });
     const title = el("div", { class: "title" });
-    title.append(swatch(css(a.tier)), a.name);
+    title.append(swatch(modelColor(a.model, a.tier)), a.name);
     const burn = a.burn > 0.5 ? ` · burning ${fmt(a.burn)} AIC/h` : "";
     const where = a.branch && a.branch !== "-" ? `${dim("repo").show(a.repo)} @ ${a.branch}` : a.repo;
     row.append(title, el("div", { class: "aic" }, fmt(a.aic) + " AIC"),
@@ -1158,14 +1269,8 @@ function renderFilters(rows) {
     const b = el("button", { type: "button", "aria-pressed": String(r.id === range) }, r.label);
     b.addEventListener("click", () => { range = r.id; remember(); render(); });
     return b;
-  }), el("span", { class: "gap" }), ...["from", "to"].map(edge => {
-    const input = el("input", { type: "date", value: range === "custom" ? custom[edge] : "" });
-    if (range === "custom") input.classList.add("on");
-    input.addEventListener("change", () => { custom[edge] = input.value; range = "custom"; remember(); render(); });
-    const label = el("label", { class: "inline" }, edge === "from" ? "From" : "to");
-    label.append(input);
-    return label;
-  }), actions);
+  }), el("span", { class: "gap" }), dateInputs(), actions);
+  renderMeasureToggle();
 
   const dims = byId("dims");
   dims.hidden = !filtersOpen;
@@ -1190,6 +1295,27 @@ function renderFilters(rows) {
     return chip;
   }));
   if (active > 1) chips.append(clearButton());
+}
+
+function dateInputs() {
+  const dates = el("span", { class: "dates" });
+  dates.append(...["from", "to"].map(edge => {
+    const input = el("input", { type: "date", value: range === "custom" ? custom[edge] : "" });
+    if (range === "custom") input.classList.add("on");
+    input.addEventListener("change", () => { custom[edge] = input.value; range = "custom"; remember(); render(); });
+    const label = el("label", { class: "inline" }, edge === "from" ? "From" : "to");
+    label.append(input);
+    return label;
+  }));
+  return dates;
+}
+
+function renderMeasureToggle() {
+  byId("measure").replaceChildren(el("span", { class: "seg-label" }, "Show"), ...MEASURE_OPTIONS.map(([id, label]) => {
+    const b = el("button", { type: "button", "aria-pressed": String(id === measure) }, label);
+    b.addEventListener("click", () => { measure = id; remember(); render(); });
+    return b;
+  }));
 }
 
 function clearButton() {
@@ -1217,11 +1343,15 @@ function render() {
   const byTier = sumBy(rows, r => r.tier), byModel = sumBy(rows, r => r.model);
   const total = totalOf(rows, "aic");
   renderKpis(rows, previous, days, byTier);
+  const measured = totalOf(rows, measure);
+  renderMeasureText();
   renderSpend(rows, days);
-  renderBars("models", "model", dimEntries(dim("model"), rows, v => css(v.tier)), total, 8);
+  renderBars("models", "model", dimEntries(dim("model"), rows, modelColor), measured, 8);
+  renderDonut("mix-aic", byModel, "aic");
+  renderDonut("mix-calls", byModel, "calls");
   for (const id of ["repo", "branch", "effort", "initiator", "endpoint", "finish", "host", "client"])
-    renderBars("by-" + id, dim(id).label, dimEntries(dim(id), rows), total);
-  renderTokenKinds(rows, total);
+    renderBars("by-" + id, dim(id).label, dimEntries(dim(id), rows), measured);
+  if (measure === "aic") renderTokenKinds(rows, total);
   renderHeatmap(rows);
   renderSessionTable(rows);
   renderModelTable(byModel, total);
