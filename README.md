@@ -2,6 +2,8 @@
 
 Local stats for GitHub Copilot CLI (and opencode on the Copilot provider): AI credits, calls and tokens per model, read from `~/.copilot/session-store.db` and `~/.copilot/session-state/*/events.jsonl`. Nothing leaves the machine. Python 3 stdlib only.
 
+![Dashboard overview](docs/overview.png)
+
 ## Usage
 
 ```sh
@@ -30,6 +32,14 @@ Sessions that use the `github-copilot` provider are read from `~/.local/share/op
 - Repository comes from the directory's `origin` remote. opencode doesn't record the branch, and its sessions don't appear under open sessions.
 
 ## Dashboard
+
+Screenshots use mock data.
+
+![Model mix and spend breakdowns](docs/breakdown.png)
+
+![Heatmap, open sessions and sessions table](docs/sessions.png)
+
+![Models and speed tables](docs/models.png)
 
 - Filters (date range, tier, model, repository, branch, effort, initiator, API endpoint, finish reason, host, session) live in the URL hash, so a view can be bookmarked. Bars, table rows and open sessions are clickable filters. Clicking a day switches the spend chart to hours. "Show" switches the tier chart, tier share, model bars, breakdowns and heatmap between spend and calls. The model mix donuts always show both.
 - Spend is compared with the window of the same length right before it, and "This month" adds a month-end projection (against `--budget` if set).
