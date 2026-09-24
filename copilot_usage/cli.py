@@ -11,7 +11,7 @@ from .config import NANO, tier_of
 from .records import usage_rows
 from .server import serve
 from .session_logs import load_sessions
-from .usage import all_records, load_calls
+from .usage import all_records, load_calls, plan_status
 
 
 def print_table(since, by):
@@ -23,7 +23,8 @@ def print_table(since, by):
                 "repo": lambda day, session_id: detail(session_id, "repo"),
                 "branch": lambda day, session_id: f"{detail(session_id, 'repo')} @ {detail(session_id, 'branch')}"}[by]
     groups = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
-    for (day, _hour, session_id, model, *_rest), row in usage_rows(all_records(sessions)).items():
+    records = all_records(sessions)
+    for (day, _hour, session_id, model, *_rest), row in usage_rows(records).items():
         if day < since:
             continue
         for field in ("aiu", "calls", "in", "out", "cache"):
@@ -41,6 +42,11 @@ def print_table(since, by):
                   f"{m['aiu'] / total:>8.0%}{m['calls']:>8,}"
                   f"{m['in'] / 1e6:>9.1f}{cached:>8}{m['out'] / 1e6:>8.2f}")
 
+    plan = plan_status(sessions, records)
+    if plan:
+        print(f"\nPlan: {plan['used']:,.0f} / {plan['limit']:,.0f} AIC ({plan['used'] / plan['limit']:.0%} used), "
+              f"{plan['outside']:,.0f} from outside this machine, resets {plan['reset'][:10]}")
+
 
 def main():
     parser = argparse.ArgumentParser(prog="copilot-usage", description=__doc__,
@@ -49,7 +55,7 @@ def main():
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--since", default="", help="YYYY-MM-DD")
     parser.add_argument("--by", choices=["month", "day", "repo", "branch"], default="month")
-    parser.add_argument("--budget", type=float, help="monthly AIC budget to track on the dashboard")
+    parser.add_argument("--budget", type=float, help="monthly AIC budget for the dashboard (default: the plan limit GitHub reports)")
     args = parser.parse_args()
 
     if args.command == "serve":

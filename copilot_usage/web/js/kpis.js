@@ -1,7 +1,7 @@
 import { TIERS, TIER_LABEL } from "./constants.js";
-import { totalOf } from "./data.js";
+import { officialPlan, totalOf } from "./data.js";
 import { byId, el } from "./dom.js";
-import { css, fmt, pct, usd } from "./format.js";
+import { css, fmt, pct, usd, when } from "./format.js";
 import { state } from "./state.js";
 
 export function renderKpis(rows, previous, days, byTier) {
@@ -11,8 +11,11 @@ export function renderKpis(rows, previous, days, byTier) {
   const tierAic = t => Math.max(0, byTier.get(t)?.aic || 0);
   const tierCalls = t => byTier.get(t)?.calls || 0;
 
-  byId("k-spend").replaceChildren(fmt(total), el("span", { class: "unit" }, "AIC"));
-  const note = [usd(total) + " at list price"];
+  const plan = officialPlan(), shown = plan ? plan.used : total;
+  const spend = byId("k-spend");
+  spend.replaceChildren(fmt(shown), el("span", { class: "unit" }, "AIC"));
+  spend.title = plan ? `Plan usage per GitHub as of ${when(plan.reported_at)}, plus this machine's calls since` : "";
+  const note = [usd(shown) + " at list price"];
   const before = previous ? totalOf(previous, "aic") : 0;
   if (before > 0.5) {
     const change = total / before - 1;
@@ -24,22 +27,25 @@ export function renderKpis(rows, previous, days, byTier) {
   const budget = byId("k-budget");
   budget.hidden = !(range === "month" && server.budget);
   if (range === "month") {
+    const spent = server.plan ? server.plan.used : total;
+    const limitName = server.plan && server.plan.limit === server.budget ? "plan" : "budget";
     const now = new Date(), monthDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const projected = total / now.getDate() * monthDays;
+    const projected = spent / now.getDate() * monthDays;
     pace = `On pace for ${fmt(projected)} AIC (${usd(projected)}) this month`;
     if (server.budget) {
-      pace += `, ${pct(projected / server.budget)} of budget`;
-      const used = total / server.budget;
-      const [status, statusLabel] = used >= 1 ? ["danger", "Over budget"]
+      pace = `On pace for ${fmt(projected)} AIC, ${pct(projected / server.budget)} of ${limitName}`;
+      const used = spent / server.budget;
+      const [status, statusLabel] = used >= 1 ? ["danger", `Over ${limitName}`]
         : projected > server.budget ? ["warn", "On pace to go over"] : ["ok", "On track"];
       budget.className = "budget " + status;
       const meter = byId("k-meter");
+      meter.setAttribute("aria-label", `Monthly ${limitName} used`);
       meter.setAttribute("aria-valuemax", server.budget);
-      meter.setAttribute("aria-valuenow", Math.round(total));
+      meter.setAttribute("aria-valuenow", Math.round(spent));
       meter.querySelector(".fill").style.width = Math.min(1, used) * 100 + "%";
       meter.querySelector(".mark").style.left = now.getDate() / monthDays * 100 + "%";
       byId("k-budget-note").replaceChildren(el("b", { class: "state" }, statusLabel),
-        ` · ${pct(used)} of the ${fmt(server.budget)} AIC budget used`);
+        ` · ${pct(used)} of ${fmt(server.budget)} AIC ${limitName}`);
     }
   }
   byId("k-spend-pace").textContent = pace;

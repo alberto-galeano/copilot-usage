@@ -9,3 +9,7 @@ export function iso(date) { return `${date.getFullYear()}-${String(date.getMonth
 export function parseDay(day) { const [y, m, d] = day.split("-").map(Number); return new Date(y, m - 1, d); }
 export function shortDay(day) { return parseDay(day).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
 export function clip(text, width) { const max = Math.max(8, Math.floor(width / 7.4)); return text.length > max ? text.slice(0, max - 1) + "…" : text; }
+export function when(epoch) {
+  const moment = new Date(epoch * 1000), time = moment.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return iso(moment) === iso(new Date()) ? time : `${shortDay(iso(moment))} ${time}`;
+}

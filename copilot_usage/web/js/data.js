@@ -76,3 +76,9 @@ export function modelColor(model, tier = state.data.tiers[model]) {
   const strength = 1 - 0.6 * Math.max(0, peers.indexOf(model)) / Math.max(1, peers.length - 1);
   return `color-mix(in srgb, ${css(tier)} ${Math.round(strength * 100)}%, transparent)`;
 }
+
+// GitHub's figure covers the whole account for the billing month, so it only stands in for local spend on the unfiltered month view.
+export function officialPlan() {
+  const { plan } = state.server;
+  return plan && state.range === "month" && !Object.keys(state.picked).length ? plan : null;
+}

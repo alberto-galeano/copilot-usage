@@ -12,7 +12,7 @@ ln -sf "$PWD/bin/copilot-usage" ~/.local/bin/copilot-usage   # or run: python3 -
 copilot-usage                                  # table per month
 copilot-usage --by day --since 2026-09-01      # or --by repo, --by branch
 copilot-usage serve                            # live dashboard at http://localhost:8765
-copilot-usage serve --budget 25000             # also track a monthly AIC budget
+copilot-usage serve --budget 25000             # track your own budget instead of the plan limit
 ```
 
 ## How the numbers are derived
@@ -21,6 +21,7 @@ copilot-usage serve --budget 25000             # also track a monthly AIC budget
 - `session-store.db` has one row per model call in `assistant_usage_events` (model, tokens, nanoAIU, reasoning effort, initiator, latency, request multiplier). This is the primary source, and it exists from CLI ~1.0.7x onwards.
 - Spend a session made before its first database row comes from `events.jsonl`: per-model totals on `session.shutdown`, with `session.usage_checkpoint` running totals credited to the active model in between. Those counters sometimes restart after a resume, so a drop is treated as a fresh counter. Sessions that were killed never wrote a shutdown, so log-only periods undercount.
 - Premium requests = request multiplier summed over user-initiated calls only, which is how the older premium-request billing counts.
+- Plan usage comes from the `premium_interactions` quota GitHub returns with each Copilot CLI call (logged in `events.jsonl`), plus local calls made since the last one. It's account-wide, so it replaces local spend in the Spend card on the unfiltered "This month" view, and the part this machine didn't log shows up as "Outside this machine" under Client. Its limit is the default budget.
 - Only Copilot CLI and opencode on this machine are covered. VS Code, github.com chat and the coding agent bill to the same account but don't log here.
 
 ## opencode
@@ -42,7 +43,7 @@ Screenshots use mock data.
 ![Models and speed tables](docs/models.png)
 
 - Filters (date range, tier, model, repository, branch, effort, initiator, API endpoint, finish reason, host, session) live in the URL hash, so a view can be bookmarked. Bars, table rows and open sessions are clickable filters. Clicking a day switches the spend chart to hours. "Show" switches the tier chart, tier share, model bars, breakdowns and heatmap between spend and calls. The model mix donuts always show both.
-- Spend is compared with the window of the same length right before it, and "This month" adds a month-end projection (against `--budget` if set).
+- Spend is compared with the window of the same length right before it, and "This month" adds plan usage and a month-end projection against the plan limit (or `--budget`).
 - Token type splits the bill using the per-call price list in `token_details_json`. Cache savings are the cache reads re-priced at that call's input rate.
 - Prompts are user-initiated calls. Subagent spend is calls with initiator `sub-agent`, and the subagent count is distinct `agent_id`s.
 - The sessions table joins `sessions`, `turns`, `session_files`, `checkpoints` and `session_refs`. Those counts cover the whole session, not the selected range. A failed-commands column shows up once `forge_trajectory_events` has rows.

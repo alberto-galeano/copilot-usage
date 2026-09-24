@@ -1,4 +1,4 @@
-"""Copilot CLI's per-session events.jsonl logs, the only source for spend older than session-store.db."""
+"""Copilot CLI's per-session events.jsonl logs: spend older than session-store.db, and GitHub's plan quota."""
 import glob
 import json
 import os
@@ -12,6 +12,16 @@ RELEVANT = tuple(
     '{"type":"session.%s"' % kind
     for kind in ("start", "model_change", "usage_checkpoint", "shutdown")
 )
+CALL_SUCCESS = '{"type":"model.model_call_success"'
+
+
+def plan_quota(line):
+    """(timestamp, premium_interactions quota) that GitHub returned with a model call."""
+    try:
+        event = json.loads(line)
+        return event["timestamp"], event["data"]["quotaSnapshots"]["premium_interactions"]
+    except (ValueError, KeyError, TypeError):
+        return None
 
 
 def parse_session(path):
@@ -26,10 +36,14 @@ def parse_session(path):
     prev = defaultdict(lambda: {"aiu": 0, "calls": 0, "tok": {}})
     credited = defaultdict(int)
     last_total = 0
-    model, repo = "unknown", "-"
+    model, repo, quota = "unknown", "-", None
 
     with open(path, encoding="utf-8", errors="replace") as lines:
         for line in lines:
+            if line.startswith(CALL_SUCCESS):
+                if '"premium_interactions"' in line:
+                    quota = plan_quota(line) or quota
+                continue
             if not line.startswith(RELEVANT):
                 continue
             try:
@@ -70,7 +84,7 @@ def parse_session(path):
                 last_total = data.get("totalNanoAiu", 0)
                 model = data.get("currentModel", model)
 
-    return {"deltas": deltas, "repo": repo, "model": model}
+    return {"deltas": deltas, "repo": repo, "model": model, "quota": quota}
 
 
 def load_sessions():

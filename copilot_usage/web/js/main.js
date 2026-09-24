@@ -4,7 +4,7 @@ import { renderHeatmap } from "./charts/heatmap.js";
 import { renderSpend } from "./charts/spend.js";
 import { MEASURE_TEXT } from "./constants.js";
 import { renderFilters, renderNotice } from "./controls.js";
-import { ingest, modelColor, sliceRows, sumBy, totalOf } from "./data.js";
+import { ingest, modelColor, officialPlan, sliceRows, sumBy, totalOf } from "./data.js";
 import { byId } from "./dom.js";
 import { renderKpis } from "./kpis.js";
 import { renderOpenSessions } from "./open-sessions.js";
@@ -25,6 +25,13 @@ function renderHeadings() {
   byId("heatmap-sub").textContent = `${what} by weekday and hour of day, local time.`;
 }
 
+function renderClients(rows, measured) {
+  const entries = dimEntries(dim("client"), rows), plan = officialPlan();
+  if (!plan || state.measure !== "aic" || plan.outside < 0.5) return renderBars("by-client", dim("client").label, entries, measured);
+  entries.push({ name: "Outside this machine", title: "VS Code, github.com and other computers, per GitHub", aic: plan.outside });
+  renderBars("by-client", dim("client").label, entries, measured + plan.outside);
+}
+
 function renderPage() {
   if (!state.data) return;
   hideTip();
@@ -40,8 +47,9 @@ function renderPage() {
   renderBars("models", "model", dimEntries(dim("model"), rows, modelColor), measured, 8);
   renderDonut("mix-aic", byModel, "aic");
   renderDonut("mix-calls", byModel, "calls");
-  for (const id of ["repo", "branch", "effort", "initiator", "endpoint", "finish", "host", "client"])
+  for (const id of ["repo", "branch", "effort", "initiator", "endpoint", "finish", "host"])
     renderBars("by-" + id, dim(id).label, dimEntries(dim(id), rows), measured);
+  renderClients(rows, measured);
   if (state.measure === "aic") renderTokenKinds(rows, total);
   renderHeatmap(rows);
   renderSessionTable(rows);

@@ -18,6 +18,7 @@
 .budget .state { color: var(--state); }
 .budget.ok { --state: var(--ok); } .budget.warn { --state: var(--warn); } .budget.danger { --state: var(--danger); }
 .kpi .note { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.budget .note, #k-spend-pace { font-size: 12px; }
 .split { display: flex; gap: 2px; height: 8px; margin-top: 12px; }
 .split span { border-radius: 2px; min-width: 0; }
 .kpi-grid .value { font-size: 24px; }

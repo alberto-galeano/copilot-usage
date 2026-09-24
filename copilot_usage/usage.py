@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from . import cache
 from .config import BURN_MINUTES, NANO, SESSIONS, tier_of
 from .opencode import opencode_load
-from .records import KEYS, LISTS, NANO_SUMS, SUMS, usage_rows
+from .records import KEYS, LISTS, NANO_SUMS, SUMS, epoch, usage_rows
 from .session_logs import load_sessions, log_records, session_name
 from .session_store import db_load
 
@@ -98,6 +98,27 @@ def active_sessions(sessions, records, info):
     return sorted(active, key=lambda s: -s["last"])
 
 
+def plan_status(sessions, records):
+    """Account-wide plan usage from the latest quota GitHub reported to Copilot CLI,
+    brought up to date with the calls this machine logged since."""
+    snapshots = [session["quota"] for session in sessions.values() if session.get("quota")]
+    if not snapshots:
+        return None
+    reported_at, quota = max(snapshots, key=lambda snapshot: snapshot[0])
+    if quota.get("isUnlimitedEntitlement") or not quota.get("entitlementRequests"):
+        return None
+    reset = datetime.fromisoformat(quota["resetDate"].replace("Z", "+00:00"))
+    start = reset.replace(year=reset.year - 1, month=12) if reset.month == 1 else reset.replace(month=reset.month - 1)
+    start = start.strftime("%Y-%m-%dT%H:%M:%S")
+    local_before = sum(r["aiu"] for r in records if start <= r["ts"] <= reported_at) / NANO
+    local_after = sum(r["aiu"] for r in records if r["ts"] > reported_at) / NANO
+    reported = quota.get("usedRequests", 0)
+    return {
+        "limit": quota["entitlementRequests"], "reported": reported, "reported_at": epoch(reported_at),
+        "used": reported + local_after, "outside": max(0, reported - local_before), "reset": quota["resetDate"],
+    }
+
+
 _built = {}
 
 
@@ -110,7 +131,8 @@ def usage_data():
         rows = sorted(usage_rows(records).items())
         info = session_info({key[2] for key, _ in rows}, sessions, meta)
         in_aic = ("aiu",) + NANO_SUMS
-        _built.update(version=version, sessions=sessions, records=records, data={
+        plan = plan_status(sessions, records)
+        _built.update(version=version, sessions=sessions, records=records, plan=plan, data={
             "fields": list(KEYS) + ["aic" if name == "aiu" else name for name in SUMS] + list(LISTS),
             "rows": [[*key, *(round(row[name] / NANO, 3) if name in in_aic else row[name] for name in SUMS),
                       *(row[name] for name in LISTS)] for key, row in rows],
@@ -122,7 +144,9 @@ def usage_data():
 
 def api_payload(known_version="", budget=None):
     built = usage_data()
-    payload = {"now": time.time(), "version": built["version"], "budget": budget,
+    plan = built["plan"]
+    payload = {"now": time.time(), "version": built["version"], "plan": plan,
+               "budget": budget if budget is not None else plan and plan["limit"],
                "burn_minutes": BURN_MINUTES,
                "active": active_sessions(built["sessions"], built["records"], built["data"]["sessions"])}
     if known_version != built["version"]:
