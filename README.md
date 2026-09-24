@@ -68,9 +68,23 @@ Screenshots use mock data.
 
 High, medium and low are guessed from model names by `TIER_RULES` in `copilot_usage/config.py`. Edit it to match how your org classifies models.
 
+## Releases
+
+Versions follow [SemVer](https://semver.org): a major bump for changes that break the CLI flags or the `/api/usage` payload, a minor bump for new features, a patch bump for fixes. `copilot-usage --version` prints the running one.
+
+To release, bump `__version__` in `copilot_usage/__init__.py`, commit, then tag and push:
+
+```sh
+git tag -s v1.1.0 -m v1.1.0
+git push origin main v1.1.0
+```
+
+The Release workflow checks that the tag matches `__version__` and publishes a GitHub release with the commit messages since the previous tag as notes.
+
 ## Layout
 
 ```
+.github/workflows/         release on version tags
 bin/copilot-usage          launcher, resolves symlinks to find the package
 copilot_usage/
   cli.py                   argument parsing and the terminal table

@@ -7,6 +7,7 @@ plus opencode sessions that use the GitHub Copilot provider.
 import argparse
 from collections import defaultdict
 
+from . import __version__
 from .config import NANO, tier_of
 from .records import usage_rows
 from .server import serve
@@ -52,6 +53,7 @@ def main():
     parser = argparse.ArgumentParser(prog="copilot-usage", description=__doc__,
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("command", nargs="?", choices=["serve"])
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--since", default="", help="YYYY-MM-DD")
     parser.add_argument("--by", choices=["month", "day", "repo", "branch"], default="month")
