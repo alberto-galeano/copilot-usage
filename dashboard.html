@@ -445,6 +445,7 @@ th button:hover, th[aria-sort] button { color: var(--text); }
         <div><h3>API endpoint</h3><div class="chart" id="by-endpoint"></div></div>
         <div><h3>Finish reason</h3><div class="chart" id="by-finish"></div></div>
         <div><h3>Host</h3><div class="chart" id="by-host"></div></div>
+        <div><h3>Client</h3><div class="chart" id="by-client"></div></div>
       </div>
     </div>
   </section>
@@ -527,6 +528,7 @@ const DIMS = [
   { id: "endpoint", label: "API endpoint", show: v => v },
   { id: "finish", label: "Finish reason", show: v => v },
   { id: "host", label: "Host", show: v => v },
+  { id: "client", label: "Client", show: v => v },
   { id: "session", label: "Session", show: sessionLabel, chipOnly: true },
 ];
 const dim = id => DIMS.find(d => d.id === id);
@@ -581,6 +583,7 @@ function ingest(next) {
     const r = Object.fromEntries(next.fields.map((f, i) => [f, values[i]]));
     const session = next.sessions[r.session] || {};
     r.repo = session.repo || "-"; r.branch = session.branch || "-"; r.host = session.host || "unknown";
+    r.client = session.client || "Copilot CLI";
     r.tier = next.tiers[r.model];
     r.weekday = (parseDay(r.day).getDay() + 6) % 7;
     return r;
@@ -1216,7 +1219,7 @@ function render() {
   renderKpis(rows, previous, days, byTier);
   renderSpend(rows, days);
   renderBars("models", "model", dimEntries(dim("model"), rows, v => css(v.tier)), total, 8);
-  for (const id of ["repo", "branch", "effort", "initiator", "endpoint", "finish", "host"])
+  for (const id of ["repo", "branch", "effort", "initiator", "endpoint", "finish", "host", "client"])
     renderBars("by-" + id, dim(id).label, dimEntries(dim(id), rows), total);
   renderTokenKinds(rows, total);
   renderHeatmap(rows);

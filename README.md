@@ -1,6 +1,6 @@
 # copilot-usage
 
-Local stats for GitHub Copilot CLI: AI credits, calls and tokens per model, read from `~/.copilot/session-store.db` and `~/.copilot/session-state/*/events.jsonl`. Nothing leaves the machine. Python 3 stdlib only.
+Local stats for GitHub Copilot CLI (and opencode on the Copilot provider): AI credits, calls and tokens per model, read from `~/.copilot/session-store.db` and `~/.copilot/session-state/*/events.jsonl`. Nothing leaves the machine. Python 3 stdlib only.
 
 ## Usage
 
@@ -19,7 +19,15 @@ copilot-usage serve --budget 25000             # also track a monthly AIC budget
 - `session-store.db` has one row per model call in `assistant_usage_events` (model, tokens, nanoAIU, reasoning effort, initiator, latency, request multiplier). This is the primary source, and it exists from CLI ~1.0.7x onwards.
 - Spend a session made before its first database row comes from `events.jsonl`: per-model totals on `session.shutdown`, with `session.usage_checkpoint` running totals credited to the active model in between. Those counters sometimes restart after a resume, so a drop is treated as a fresh counter. Sessions that were killed never wrote a shutdown, so log-only periods undercount.
 - Premium requests = request multiplier summed over user-initiated calls only, which is how the older premium-request billing counts.
-- Only Copilot CLI on this machine is covered. VS Code, github.com chat and the coding agent bill to the same account but don't log here.
+- Only Copilot CLI and opencode on this machine are covered. VS Code, github.com chat and the coding agent bill to the same account but don't log here.
+
+## opencode
+
+Sessions that use the `github-copilot` provider are read from `~/.local/share/opencode/opencode.db` (opencode 2.x) and show up under Client = opencode.
+
+- opencode's own `cost` leaves out cache writes, so each call is re-priced with the per-token rates Copilot CLI last logged for that model. Models Copilot CLI never used fall back to opencode's `cost`, which undercounts.
+- The first call after a prompt counts as user-initiated, later ones as agent, and calls from child sessions as sub-agent (credited to the root session).
+- Repository comes from the directory's `origin` remote. opencode doesn't record the branch, and its sessions don't appear under open sessions.
 
 ## Dashboard
 
