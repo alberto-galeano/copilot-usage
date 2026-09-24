@@ -7,13 +7,27 @@ Local stats for GitHub Copilot CLI (and opencode on the Copilot provider): AI cr
 ## Usage
 
 ```sh
-ln -sf "$PWD/bin/copilot-usage" ~/.local/bin/copilot-usage   # or run: python3 -m copilot_usage
+ln -sf "$PWD/bin/copilot-usage" ~/.local/bin/copilot-usage
 
 copilot-usage                                  # table per month
 copilot-usage --by day --since 2026-09-01      # or --by repo, --by branch
 copilot-usage serve                            # live dashboard at http://localhost:8765
 copilot-usage serve --budget 25000             # track your own budget instead of the plan limit
 ```
+
+Without the link, run `python3 -m copilot_usage` from the repo folder with the same arguments.
+
+### Windows
+
+Runs under native Windows Python. From the repo folder:
+
+```powershell
+python -m copilot_usage                        # table per month
+python -m copilot_usage serve                  # live dashboard at http://localhost:8765
+python C:\path\to\copilot-usage\bin\copilot-usage serve   # from any folder
+```
+
+Data is read from `%USERPROFILE%\.copilot`. If your profile lives on a network share (a `\\server\share` path), SQLite can't open the databases there, so only the older `events.jsonl` spend is counted.
 
 ## How the numbers are derived
 
@@ -22,7 +36,7 @@ copilot-usage serve --budget 25000             # track your own budget instead o
 - Spend a session made before its first database row comes from `events.jsonl`: per-model totals on `session.shutdown`, with `session.usage_checkpoint` running totals credited to the active model in between. Those counters sometimes restart after a resume, so a drop is treated as a fresh counter. Sessions that were killed never wrote a shutdown, so log-only periods undercount.
 - Premium requests = request multiplier summed over user-initiated calls only, which is how the older premium-request billing counts.
 - Plan usage comes from the `premium_interactions` quota GitHub returns with each Copilot CLI call (logged in `events.jsonl`), plus local calls made since the last one. It's account-wide, so it replaces local spend in the Spend card on the unfiltered "This month" view, and the part this machine didn't log shows up as "Outside this machine" under Client. Its limit is the default budget.
-- Only Copilot CLI and opencode on this machine are covered. VS Code, github.com chat and the coding agent bill to the same account but don't log here.
+- Only Copilot CLI and opencode on this machine are broken down. VS Code, github.com chat, the coding agent and other computers bill to the same account but don't log here, so they only show up inside the plan total.
 
 ## opencode
 
