@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copilot CLI usage</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script src="js/theme-boot.js"></script>
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/header.css">
+<link rel="stylesheet" href="css/settings.css">
+<link rel="stylesheet" href="css/kpis.css">
+<link rel="stylesheet" href="css/charts.css">
+<link rel="stylesheet" href="css/tables.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<main class="loading">
+  <div class="bar">
+    <header>
+      <h1>Copilot CLI usage</h1>
+      <div class="tools">
+        <div class="status" id="status"><span class="pulse"></span><span id="updated">Loading usage data</span></div>
+        <div class="filters" id="measure" role="group" aria-label="Show spend or calls"></div>
+        <button type="button" class="ghost" id="open-settings" aria-haspopup="dialog">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h6m4 0h2M2 12h2m4 0h6"/><circle cx="10" cy="4" r="2"/><circle cx="6" cy="12" r="2"/></svg>
+          Settings
+        </button>
+      </div>
+    </header>
+    <div class="filters" id="filters" role="group" aria-label="Date range"></div>
+  </div>
+  <div class="filters chips" id="chips" role="group" aria-label="Active filters"></div>
+  <div class="filters dims" id="dims" role="group" aria-label="Filters" hidden></div>
+  <div class="notice" id="notice" role="status" hidden></div>
+
+  <section class="kpis">
+    <div class="card kpi hero">
+      <div class="label">Spend</div><div class="value" id="k-spend">-</div>
+      <div class="note" id="k-spend-note"></div>
+      <div class="budget" id="k-budget" hidden>
+        <div class="meter" id="k-meter" role="meter" aria-label="Monthly budget used" aria-valuemin="0"><span class="fill"></span><span class="mark" title="Where even spending would be today"></span></div>
+        <div class="note" id="k-budget-note"></div>
+      </div>
+      <div class="note" id="k-spend-pace"></div>
+    </div>
+    <div class="kpi-grid">
+      <div class="card kpi wide"><div class="label" id="k-share-label">High tier share of spend</div><div class="value" id="k-share">-</div><div class="note" id="k-share-note"></div><div class="split" id="k-split"></div></div>
+      <div class="card kpi"><div class="label">Model calls</div><div class="value" id="k-calls">-</div><div class="note" id="k-calls-note"></div></div>
+      <div class="card kpi"><div class="label">AIC per call</div><div class="value" id="k-rate">-</div><div class="note" id="k-rate-note"></div></div>
+      <div class="card kpi"><div class="label">Prompts you sent</div><div class="value" id="k-prompts">-</div><div class="note" id="k-prompts-note"></div></div>
+      <div class="card kpi"><div class="label">Premium requests</div><div class="value" id="k-premium">-</div><div class="note" id="k-premium-note"></div></div>
+      <div class="card kpi"><div class="label">Input from cache</div><div class="value" id="k-cache">-</div><div class="note" id="k-cache-note"></div></div>
+      <div class="card kpi"><div class="label">Subagent spend share</div><div class="value" id="k-sub">-</div><div class="note" id="k-sub-note"></div></div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2 id="daily-title">Daily spend by tier</h2>
+      <p class="sub" id="daily-sub"></p>
+      <div class="legend" id="legend"></div>
+      <div class="chart" id="daily"></div>
+      <h3>Input read from cache</h3>
+      <div class="chart" id="cache-rate"></div>
+    </div>
+    <div class="card">
+      <h2 id="models-title">Spend by model</h2>
+      <p class="sub" id="models-sub"></p>
+      <div class="chart" id="models"></div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Model mix</h2>
+      <p class="sub">Each model's share of spend and of calls, colored by tier. Shades tell models in the same tier apart. Click a model to filter by it.</p>
+      <div class="mix">
+        <div><h3>Spend</h3><div class="mix-item" id="mix-aic"></div></div>
+        <div><h3>Calls</h3><div class="mix-item" id="mix-calls"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2 id="breakdown-title">Where the spend goes</h2>
+      <p class="sub" id="breakdown-sub"></p>
+      <div class="breakdowns">
+        <div><h3>Repository</h3><div class="chart" id="by-repo"></div></div>
+        <div><h3>Branch</h3><div class="chart" id="by-branch"></div></div>
+        <div><h3>Reasoning effort</h3><div class="chart" id="by-effort"></div></div>
+        <div><h3>Initiator</h3><div class="chart" id="by-initiator"></div></div>
+        <div id="tokens-block"><h3>Token type</h3><div class="chart" id="by-tokens"></div></div>
+        <div><h3>API endpoint</h3><div class="chart" id="by-endpoint"></div></div>
+        <div><h3>Finish reason</h3><div class="chart" id="by-finish"></div></div>
+        <div><h3>Host</h3><div class="chart" id="by-host"></div></div>
+        <div><h3>Client</h3><div class="chart" id="by-client"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2 id="heatmap-title">When the spend happens</h2>
+      <p class="sub" id="heatmap-sub"></p>
+      <div class="chart" id="heatmap"></div>
+    </div>
+    <div class="card">
+      <h2>Open sessions</h2>
+      <p class="sub">Running Copilot CLI sessions, what each has spent, and its burn rate over the last 15 minutes. Click one to filter by it.</p>
+      <div class="sessions" id="sessions"></div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="card">
+      <h2>Sessions</h2>
+      <p class="sub">Most expensive sessions in this range. Spend, prompts and calls follow the filters. Turns, files, compactions and refs cover the whole session. Click a row to filter by that session.</p>
+      <div class="scroll"><table id="session-table"></table></div>
+      <button type="button" class="more" id="session-more" hidden></button>
+    </div>
+    <div class="card">
+      <h2>Models</h2>
+      <p class="sub">Premium requests counts each prompt you sent times the model multiplier (the older billing unit, where Opus 5 is 15x and Gemini Flash 14x). Usage from before 8 Jul 2026 comes from session logs and has no latency, effort, initiator or token cost detail.</p>
+      <div class="scroll"><table id="table"></table></div>
+    </div>
+    <div class="card">
+      <h2>Speed</h2>
+      <p class="sub" id="speed-sub"></p>
+      <div class="scroll"><table id="speed"></table></div>
+    </div>
+  </section>
+</main>
+<dialog id="settings" aria-labelledby="settings-title">
+  <form method="dialog">
+    <header><h2 id="settings-title">Settings</h2><button class="ghost">Close</button></header>
+    <fieldset>
+      <legend>Theme</legend>
+      <p class="sub">Saved in this browser.</p>
+      <div class="themes" id="themes"></div>
+    </fieldset>
+  </form>
+</dialog>
+<div id="tip"></div>
+</body>
+</html>

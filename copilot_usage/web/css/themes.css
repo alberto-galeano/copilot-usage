@@ -1,0 +1,189 @@
+:root {
+  --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "SF Mono", Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+/* Themes are scoped by attribute, not :root, so the settings dialog can preview each one on its own card. */
+:root, [data-theme] {
+  color-scheme: light;
+  --page: #eef2f9; --surface: rgba(255,255,255,.82); --solid: #ffffff;
+  --text: #0a1020; --text-2: #46536e; --muted: #64708a;
+  --grid: #dde4f0; --axis: #b9c4d8; --border: rgba(20,60,120,.14);
+  --accent: #0b6fd6; --accent-2: #6b3fe0;
+  --high: #1877e0; --medium: #e2622b; --low: #0f9f70;
+  --live: #0f9f70; --neutral: #7c89a6; --focus: #0b6fd6;
+  --danger: #c4322a; --warn: #8f5b00; --ok: #0f7f52;
+  --hero: linear-gradient(90deg, var(--text), var(--accent));
+  --backdrop: linear-gradient(var(--page), var(--page));
+  --card-glow: 0 1px 2px rgba(20,40,80,.06); --card-glow-hover: 0 6px 24px rgba(20,60,120,.12);
+  --mark-glow: none; --lit: none; --hover: var(--border);
+  --body: var(--sans); --head: var(--mono); --num: var(--mono); --caps: uppercase; --track: 1; --radius: 10px;
+}
+[data-theme="hud"] {
+  color-scheme: dark;
+  --page: #05070d; --surface: rgba(16,24,42,.66); --solid: #0d1424;
+  --text: #e8f1ff; --text-2: #9db0d0; --muted: #7a8cae;
+  --grid: #1a2640; --axis: #2b3b5e; --border: rgba(120,190,255,.16);
+  --accent: #4cc2ff; --accent-2: #a06bff;
+  --high: #4cc2ff; --medium: #ff8a4c; --low: #2ee6a6;
+  --live: #2ee6a6; --neutral: #8193ba; --focus: #8fd8ff;
+  --danger: #ff5d6c; --warn: #ffb547; --ok: #2ee6a6;
+  --hero: linear-gradient(90deg, #ffffff 20%, var(--accent));
+  --backdrop:
+    radial-gradient(1100px 520px at 8% -8%, rgba(76,194,255,.13), transparent 70%),
+    radial-gradient(900px 480px at 100% 0%, rgba(160,107,255,.11), transparent 70%),
+    linear-gradient(rgba(120,190,255,.035) 1px, transparent 1px) 0 0 / 100% 40px,
+    linear-gradient(90deg, rgba(120,190,255,.035) 1px, transparent 1px) 0 0 / 40px 100%,
+    linear-gradient(var(--page), var(--page));
+  --card-glow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 32px rgba(0,0,0,.35);
+  --card-glow-hover: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 1px rgba(76,194,255,.22), 0 0 32px rgba(76,194,255,.10);
+  --mark-glow: drop-shadow(0 0 4px currentColor); --lit: 0 0 10px;
+}
+[data-theme="synthwave"] {
+  color-scheme: dark;
+  --page: #12061f; --surface: rgba(40,15,66,.66); --solid: #1c0b30;
+  --text: #fdeaff; --text-2: #cfaee6; --muted: #a184bd;
+  --grid: #2c1648; --axis: #44236b; --border: rgba(255,110,230,.2);
+  --accent: #ff4fd8; --accent-2: #ffb347;
+  --high: #ff4fd8; --medium: #ffb347; --low: #3df5ff;
+  --live: #3df5ff; --neutral: #a58bd0; --focus: #ff9bea;
+  --danger: #ff5d6c; --warn: #ffd166; --ok: #3df5ff;
+  --hero: linear-gradient(90deg, #ffb347, #ff4fd8 55%, #a06bff);
+  --backdrop:
+    radial-gradient(1000px 520px at 50% 118%, rgba(255,79,216,.24), transparent 70%),
+    radial-gradient(700px 400px at 92% -10%, rgba(61,245,255,.10), transparent 70%),
+    linear-gradient(rgba(255,110,230,.05) 1px, transparent 1px) 0 0 / 100% 48px,
+    linear-gradient(90deg, rgba(255,110,230,.05) 1px, transparent 1px) 0 0 / 48px 100%,
+    linear-gradient(var(--page), var(--page));
+  --card-glow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 32px rgba(0,0,0,.4);
+  --card-glow-hover: 0 0 0 1px rgba(255,79,216,.35), 0 0 36px rgba(255,79,216,.16);
+  --mark-glow: drop-shadow(0 0 5px currentColor); --lit: 0 0 12px;
+}
+[data-theme="terminal"] {
+  color-scheme: dark;
+  --page: #020603; --surface: #06100a; --solid: #06100a;
+  --text: #c8ffd4; --text-2: #7fd69a; --muted: #5aa873;
+  --grid: #0f2417; --axis: #1c4029; --border: rgba(80,255,140,.22);
+  --accent: #4dff88; --accent-2: #4dff88;
+  --high: #4dff88; --medium: #ffb000; --low: #38d6ff;
+  --live: #4dff88; --neutral: #4f9a68; --focus: #b6ffcb;
+  --danger: #ff5d5d; --warn: #ffb000; --ok: #4dff88;
+  --hero: linear-gradient(var(--accent), var(--accent));
+  --backdrop: repeating-linear-gradient(0deg, rgba(80,255,140,.04) 0 1px, transparent 1px 3px), linear-gradient(var(--page), var(--page));
+  --card-glow: none; --card-glow-hover: 0 0 0 1px rgba(77,255,136,.4), 0 0 18px rgba(77,255,136,.12);
+  --mark-glow: drop-shadow(0 0 3px currentColor); --lit: 0 0 8px;
+  --body: var(--mono); --radius: 2px;
+}
+[data-theme="graphite"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --solid: #1a1a19;
+  --text: #fff; --text-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10);
+  --accent: #3987e5; --accent-2: #3987e5;
+  --high: #3987e5; --medium: #d95926; --low: #199e70;
+  --live: #0ca30c; --neutral: #898781; --focus: #6aa7f0;
+  --danger: #f0655a; --warn: #e0a030; --ok: #35b57c;
+  --hero: linear-gradient(var(--text), var(--text));
+  --card-glow: none; --card-glow-hover: none;
+  --head: var(--sans); --num: var(--sans); --caps: none; --track: 0;
+}
+[data-theme="nord"] {
+  color-scheme: dark;
+  --page: #2e3440; --surface: #3b4252; --solid: #3b4252;
+  --text: #eceff4; --text-2: #d8dee9; --muted: #a9b3c6;
+  --grid: #434c5e; --axis: #4c566a; --border: rgba(216,222,233,.12);
+  --accent: #88c0d0; --accent-2: #81a1c1;
+  --high: #88c0d0; --medium: #d08770; --low: #a3be8c;
+  --live: #a3be8c; --neutral: #8f9bb3; --focus: #8fbcbb;
+  --danger: #e58f98; --warn: #ebcb8b; --ok: #a3be8c;
+  --hero: linear-gradient(var(--text), var(--text));
+  --card-glow: none; --card-glow-hover: 0 8px 24px rgba(0,0,0,.2);
+  --head: var(--sans); --num: var(--sans); --caps: none; --track: 0; --radius: 8px;
+}
+[data-theme="ember"] {
+  color-scheme: dark;
+  --page: #120c0a; --surface: rgba(40,25,19,.7); --solid: #1d130f;
+  --text: #fff1e6; --text-2: #d9b8a3; --muted: #a88a78;
+  --grid: #2e1e17; --axis: #4a3024; --border: rgba(255,150,90,.18);
+  --accent: #ff7a3d; --accent-2: #ffc15e;
+  --high: #ff6b3d; --medium: #ffc15e; --low: #6fd6c4;
+  --live: #6fd6c4; --neutral: #b0907c; --focus: #ffb38f;
+  --danger: #ff4d6d; --warn: #ffc15e; --ok: #6fd6c4;
+  --hero: linear-gradient(90deg, #ffc15e, #ff6b3d);
+  --backdrop:
+    radial-gradient(900px 480px at 0% 0%, rgba(255,107,61,.15), transparent 70%),
+    radial-gradient(800px 420px at 100% 100%, rgba(255,193,94,.08), transparent 70%),
+    linear-gradient(var(--page), var(--page));
+  --card-glow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 32px rgba(0,0,0,.4);
+  --card-glow-hover: 0 0 0 1px rgba(255,122,61,.3), 0 0 32px rgba(255,107,61,.12);
+  --mark-glow: drop-shadow(0 0 3px currentColor); --lit: 0 0 10px;
+}
+[data-theme="blueprint"] {
+  color-scheme: dark;
+  --page: #0b3a75; --surface: rgba(255,255,255,.05); --solid: #0e4385;
+  --text: #f2f8ff; --text-2: #bcd6f5; --muted: #9bbde8;
+  --grid: #2a5a99; --axis: #5d8ac4; --border: rgba(255,255,255,.35); --hover: rgba(255,255,255,.12);
+  --accent: #ffffff; --accent-2: #9fd0ff;
+  --high: #ffffff; --medium: #ffd166; --low: #7ee0ff;
+  --live: #7ee0ff; --neutral: #8fb4e3; --focus: #ffd166;
+  --danger: #ffa3a3; --warn: #ffd166; --ok: #9ff0c0;
+  --hero: linear-gradient(var(--text), var(--text));
+  --backdrop:
+    linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px) 0 0 / 100% 100px,
+    linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px) 0 0 / 100px 100%,
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 100% 20px,
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 20px 100%,
+    linear-gradient(var(--page), var(--page));
+  --card-glow: none; --card-glow-hover: 0 0 0 1px #fff;
+  --body: var(--mono); --radius: 0px;
+}
+[data-theme="brutalist"] {
+  --page: #f4f1ea; --surface: #ffffff; --solid: #ffffff;
+  --text: #000; --text-2: #2b2b2b; --muted: #555;
+  --grid: #d9d5cb; --axis: #000; --border: #000; --hover: rgba(0,0,0,.08);
+  --accent: #1d3fd8; --accent-2: #1d3fd8;
+  --high: #1d3fd8; --medium: #e0311f; --low: #00916e;
+  --live: #00916e; --neutral: #1a1a1a; --focus: #1d3fd8;
+  --danger: #c7271a;
+  --hero: linear-gradient(var(--text), var(--text));
+  --card-glow: 4px 4px 0 #000; --card-glow-hover: 6px 6px 0 var(--accent);
+  --radius: 0px;
+}
+[data-theme="brutalist-dark"] {
+  color-scheme: dark;
+  --page: #0a0a0a; --surface: #141414; --solid: #141414;
+  --text: #fff; --text-2: #d4d4d4; --muted: #a3a3a3;
+  --grid: #2a2a2a; --axis: #fff; --border: #fff; --hover: rgba(255,255,255,.1);
+  --accent: #ffe600; --accent-2: #ffe600;
+  --high: #5b7cff; --medium: #ff4a36; --low: #00d19f;
+  --live: #00d19f; --neutral: #e5e5e5; --focus: #ffe600;
+  --danger: #ff6b5c; --warn: #ffc94d; --ok: #35d6a0;
+  --hero: linear-gradient(var(--text), var(--text));
+  --card-glow: 4px 4px 0 #fff; --card-glow-hover: 6px 6px 0 var(--accent);
+  --radius: 0px;
+}
+[data-theme="candy"] {
+  --page: #fdf4ff; --surface: rgba(255,255,255,.85); --solid: #ffffff;
+  --text: #2a1540; --text-2: #5f4b7a; --muted: #7a6894;
+  --grid: #efe0f7; --axis: #d5bfe6; --border: rgba(140,80,200,.18);
+  --accent: #c026d3; --accent-2: #6d5efc;
+  --high: #a855f7; --medium: #ec4899; --low: #0d9488;
+  --live: #0d9488; --neutral: #9d8bb8; --focus: #c026d3;
+  --hero: linear-gradient(90deg, #c026d3, #6d5efc);
+  --backdrop:
+    radial-gradient(800px 420px at 0% 0%, rgba(236,72,153,.13), transparent 70%),
+    radial-gradient(800px 420px at 100% 0%, rgba(109,94,252,.13), transparent 70%),
+    linear-gradient(var(--page), var(--page));
+  --card-glow: 0 2px 10px rgba(140,80,200,.08); --card-glow-hover: 0 10px 30px rgba(140,80,200,.18);
+  --head: var(--sans); --num: var(--sans); --caps: none; --track: 0; --radius: 18px;
+}
+[data-theme="paper"] {
+  --page: #f9f9f7; --surface: #fcfcfb; --solid: #fcfcfb;
+  --text: #0b0b0b; --text-2: #52514e; --muted: #6f6d68;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10);
+  --accent: #2a78d6; --accent-2: #2a78d6;
+  --high: #2a78d6; --medium: #eb6834; --low: #1baf7a;
+  --live: #0ca30c; --neutral: #898781;  --focus: #2a78d6;
+  --hero: linear-gradient(var(--text), var(--text));
+  --card-glow: none; --card-glow-hover: none;
+  --head: var(--sans); --num: var(--sans); --caps: none; --track: 0;
+}

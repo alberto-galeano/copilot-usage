@@ -1,0 +1,22 @@
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { color: var(--text-2); font: 500 11px var(--head); letter-spacing: calc(.06em * var(--track)); text-transform: var(--caps); border-bottom-color: var(--axis); }
+th.l, td.l { text-align: left; }
+tr:last-child td { border-bottom: 0; }
+th:first-child, td:first-child { position: sticky; left: 0; background-color: var(--solid); }
+tr.active td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
+tr.pick:hover td, tr.pick:focus-visible td, tr.active td { background-image: linear-gradient(var(--hover), var(--hover)); }
+tr.pick:focus-visible { outline-offset: -2px; }
+th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+th button:hover, th[aria-sort] button { color: var(--text); }
+.clip { display: inline-block; max-width: 340px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.clip.narrow { max-width: 200px; }
+.more { font: inherit; font-size: 13px; color: var(--text-2); background: none; border: 0; padding: 10px 0 0; cursor: pointer; text-decoration: underline; }
+@media (max-width: 820px) { .clip, .clip.narrow { max-width: 150px; } }
+
+.sessions { display: grid; gap: 10px; }
+.session { cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; }
+.session .meta { color: var(--text-2); font-size: 12px; grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session .aic { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.session .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session:hover .title, .session:focus-visible .title { text-decoration: underline; }

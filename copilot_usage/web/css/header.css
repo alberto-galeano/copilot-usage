@@ -1,0 +1,50 @@
+.bar { padding: 20px calc(50vw - 50%) 10px; margin: 0 calc(50% - 50vw) 8px; z-index: 5;
+  background: color-mix(in srgb, var(--page) 72%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, transparent, var(--border) 20%, var(--accent) 50%, var(--border) 80%, transparent) 1; }
+@media (min-width: 821px) { .bar { position: sticky; top: 0; } }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.status { color: var(--text-2); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.status { font-family: var(--head); font-size: 12px; }
+.tools { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; justify-content: flex-end; }
+.ghost { font: inherit; font-size: 13px; color: var(--text-2); background: none; border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: color .2s, border-color .2s; }
+.ghost:hover { color: var(--text); border-color: var(--accent); }
+.ghost svg { width: 14px; height: 14px; }
+@media (pointer: coarse) { .ghost { min-height: 44px; } }
+
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--live); color: var(--live); box-shadow: var(--lit) currentColor; animation: pulse 2s infinite; }
+.status.stale { color: var(--warn); font-weight: 600; }
+.status.stale .pulse { background: var(--warn); animation: none; }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+@keyframes pulse { 50% { opacity: .35; } }
+
+.filters { display: flex; gap: 4px; margin: 12px 0 0; flex-wrap: wrap; align-items: center; }
+.filters.dims, .filters.chips { margin: 0 0 12px; gap: 8px; }
+.filters.chips:empty, .filters[hidden] { display: none; }
+.filters.dims { padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.filters label.inline { flex-direction: row; align-items: center; gap: 6px; }
+.filters label { color: var(--text-2); font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
+.filters select, .filters input { font: inherit; font-size: 13px; color: var(--text); background: var(--solid); transition: border-color .2s, box-shadow .2s;
+  border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; max-width: 220px; }
+.filters .on { border-color: var(--accent); box-shadow: var(--lit) color-mix(in srgb, var(--accent) 40%, transparent); }
+.filters select:hover, .filters input:hover { border-color: var(--accent); }
+.filters .gap { width: 12px; }
+.tools .filters { margin: 0; flex-wrap: nowrap; }
+.filters .dates { display: flex; gap: 4px; }
+.filters .seg-label { color: var(--text-2); font-size: 12px; margin-right: 2px; }
+.filters .clear { text-decoration: underline; }
+.filters .push { margin-left: auto; display: flex; gap: 4px; }
+.filters .chip { color: var(--text); background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: var(--accent); border-radius: 999px; }
+@media (pointer: coarse) { .filters button, .filters select, .filters input { min-height: 44px; } }
+.filters button { font: inherit; color: var(--text-2); background: none; border: 1px solid transparent;
+  border-radius: 6px; padding: 5px 12px; cursor: pointer; transition: color .2s, background-color .2s, border-color .2s, box-shadow .2s; }
+.filters button:hover { background: var(--hover); }
+.filters button[aria-expanded] { border-color: var(--border); }
+.filters button[aria-expanded=true] { color: var(--text); background: var(--surface); }
+.filters button[aria-pressed=true] { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: var(--accent); font-weight: 600; box-shadow: var(--lit) color-mix(in srgb, var(--accent) 35%, transparent); }
+
+.notice { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--warn) 50%, var(--border)); border-radius: var(--radius); background: var(--surface); color: var(--text-2); }
+.notice[hidden] { display: none; }
+.notice button { font: inherit; color: var(--text); background: none; border: 1px solid var(--text-2); border-radius: 6px; padding: 4px 12px; cursor: pointer; }

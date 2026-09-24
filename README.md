@@ -1,13 +1,13 @@
 # copilot-usage
 
-Local stats for GitHub Copilot CLI (and opencode on the Copilot provider): AI credits, calls and tokens per model, read from `~/.copilot/session-store.db` and `~/.copilot/session-state/*/events.jsonl`. Nothing leaves the machine. Python 3 stdlib only.
+Local stats for GitHub Copilot CLI (and opencode on the Copilot provider): AI credits, calls and tokens per model, read from `~/.copilot/session-store.db` and `~/.copilot/session-state/*/events.jsonl`. Nothing leaves the machine. Python 3.9+ stdlib only, no build step.
 
 ![Dashboard overview](docs/overview.png)
 
 ## Usage
 
 ```sh
-ln -sf "$PWD/copilot_usage.py" ~/.local/bin/copilot-usage
+ln -sf "$PWD/bin/copilot-usage" ~/.local/bin/copilot-usage   # or run: python3 -m copilot_usage
 
 copilot-usage                                  # table per month
 copilot-usage --by day --since 2026-09-01      # or --by repo, --by branch
@@ -51,4 +51,24 @@ Screenshots use mock data.
 
 ## Tiers
 
-High, medium and low are guessed from model names by `TIER_RULES` at the top of `copilot_usage.py`. Edit it to match how your org classifies models.
+High, medium and low are guessed from model names by `TIER_RULES` in `copilot_usage/config.py`. Edit it to match how your org classifies models.
+
+## Layout
+
+```
+bin/copilot-usage          launcher, resolves symlinks to find the package
+copilot_usage/
+  cli.py                   argument parsing and the terminal table
+  config.py                paths, units and TIER_RULES
+  session_store.py         per-call rows from session-store.db
+  session_logs.py          events.jsonl parsing for older sessions
+  opencode.py              opencode.db sessions on the Copilot provider
+  records.py, cache.py     shared record shape and file-change cache
+  usage.py                 merges sources and builds the API payload
+  server.py                serves /api/usage and the web/ folder
+  web/
+    index.html
+    css/                   themes, base layout, header, settings, KPIs, charts, tables
+    js/                    ES modules, main.js is the entry point, charts/ holds each chart
+docs/                      README screenshots (mock data)
+```
