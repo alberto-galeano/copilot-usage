@@ -9,11 +9,14 @@ function mixSlices(byModel, field) {
   const ranked = [...byModel].map(([model, v]) => ({ model, tier: v.tier, value: Math.max(0, v[field]) }))
     .filter(e => e.value > 0).sort((a, b) => b.value - a.value);
   const kept = ranked.length > MIX_SLICES ? ranked.slice(0, MIX_SLICES - 1) : ranked;
-  kept.sort((a, b) => TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier) || b.value - a.value);
   const rest = ranked.slice(kept.length);
   if (rest.length) kept.push({ model: `${rest.length} others`, value: rest.reduce((a, e) => a + e.value, 0) });
   return kept;
 }
+
+const tierRank = slice => slice.tier ? TIERS.indexOf(slice.tier) : TIERS.length;
+const colorOf = slice => slice.tier ? modelColor(slice.model) : css("neutral");
+const pickModel = slice => () => toggle("model", slice.model);
 
 export function renderDonut(hostId, byModel, field) {
   const host = byId(hostId), { unit, noun } = MEASURE_TEXT[field];
@@ -23,26 +26,26 @@ export function renderDonut(hostId, byModel, field) {
   const svg = s("svg", { viewBox: `0 0 ${size} ${size}`, height: size, role: "group", "aria-label": `Share of ${noun} by model` });
   const legend = el("div", { class: "mix-legend" });
   let start = 0;
-  for (const slice of slices) {
-    const color = slice.tier ? modelColor(slice.model) : css("neutral");
-    const length = slice.value / total * around;
+  for (const slice of [...slices].sort((a, b) => tierRank(a) - tierRank(b))) {
+    const color = colorOf(slice), length = slice.value / total * around;
     const arc = s("circle", { class: "slice mark", cx: c, cy: c, r, fill: "none", stroke: "currentColor",
       style: `color:${color}`, "stroke-dasharray": `${Math.max(0, length - gap)} ${around}`, "stroke-dashoffset": -start,
       transform: `rotate(-90 ${c} ${c})` });
     hoverable(arc, slice.model, [{ color, value: `${fmt(slice.value)} ${unit}`, label: `${pct(slice.value / total)} of ${noun}` }]);
+    if (slice.tier) clickable(arc, pickModel(slice));
+    svg.append(arc);
+    start += length;
+  }
+  for (const slice of slices) {
     const row = el("div", { class: "mix-row" });
     const name = el("span", { class: "name", title: slice.model });
-    name.append(swatch(color), slice.model);
+    name.append(swatch(colorOf(slice)), slice.model);
     row.append(name, el("b", {}, fmt(slice.value)), el("span", {}, pct(slice.value / total)));
     if (slice.tier) {
-      const onPick = () => toggle("model", slice.model);
-      clickable(arc, onPick);
-      clickable(row, onPick);
+      clickable(row, pickModel(slice));
       row.setAttribute("tabindex", "0");
     }
-    svg.append(arc);
     legend.append(row);
-    start += length;
   }
   svg.append(s("text", { class: "total", x: c, y: c + 4, "text-anchor": "middle" }, fmt(total)),
     s("text", { x: c, y: c + 22, "text-anchor": "middle" }, unit));

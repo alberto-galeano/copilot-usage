@@ -28,7 +28,7 @@ export function renderBars(hostId, label, entries, total, limit = 6) {
     svg.append(s("text", { class: "val", x: w + 6, y: y0 + 26 }, `${fmt(value)} · ${pct(value / total)}`));
     const hit = s("rect", { class: "hit", x: 0, y: y0, width: W, height: rowH - 2, rx: 4 });
     const lines = [{ color: entry.color || css("neutral"), value: `${fmt(value)} ${unit}`, label: `${pct(value / total)} of ${noun}` }];
-    const other = measure === "calls" ? "aic" : "calls";
+    const other = measure === "aic" ? "calls" : "aic";
     if (entry[other] != null) lines.push({ value: fmt(entry[other]), label: MEASURE_TEXT[other].unit });
     hoverable(hit, entry.title || entry.name, lines);
     if (entry.onPick) clickable(hit, entry.onPick);
@@ -41,7 +41,7 @@ export function renderBars(hostId, label, entries, total, limit = 6) {
 
 export function dimEntries(d, rows, colorOf) {
   return [...sumBy(rows, r => r[d.id])].map(([value, v]) => ({
-    name: d.show(value), title: value, aic: v.aic, calls: v.calls, color: colorOf?.(value),
+    name: d.show(value), title: value, aic: v.aic, calls: v.calls, prompts: v.prompts, color: colorOf?.(value),
     active: state.picked[d.id] === value, onPick: () => toggle(d.id, value),
   }));
 }

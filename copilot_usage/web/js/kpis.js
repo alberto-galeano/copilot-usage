@@ -1,4 +1,4 @@
-import { TIERS, TIER_LABEL } from "./constants.js";
+import { MEASURE_TEXT, TIERS, TIER_LABEL } from "./constants.js";
 import { officialPlan, totalOf } from "./data.js";
 import { byId, el } from "./dom.js";
 import { css, fmt, pct, usd, when } from "./format.js";
@@ -50,13 +50,13 @@ export function renderKpis(rows, previous, days, byTier) {
   }
   byId("k-spend-pace").textContent = pace;
 
-  const byCalls = measure === "calls";
-  const tierShare = t => byCalls ? tierCalls(t) / calls : tierAic(t) / total;
-  byId("k-share-label").textContent = `High tier share of ${byCalls ? "calls" : "spend"}`;
-  byId("k-share").textContent = (byCalls ? calls : total > 0) ? pct(tierShare("high")) : "-";
-  let shareNote = byCalls
-    ? total > 0 ? `${pct(tierAic("high") / total)} of spend went to high tier models.` : ""
-    : calls ? `${pct(tierCalls("high") / calls)} of calls went to high tier models.` : "";
+  const measured = totalOf(rows, measure);
+  const tierShare = t => Math.max(0, byTier.get(t)?.[measure] || 0) / measured;
+  byId("k-share-label").textContent = `High tier share of ${MEASURE_TEXT[measure].noun}`;
+  byId("k-share").textContent = measured > 0 ? pct(tierShare("high")) : "-";
+  let shareNote = measure === "aic"
+    ? calls ? `${pct(tierCalls("high") / calls)} of calls went to high tier models.` : ""
+    : total > 0 ? `${pct(tierAic("high") / total)} of spend went to high tier models.` : "";
   const p = byTier.get("high"), mid = byTier.get("medium");
   if (p?.calls && mid?.calls) {
     const saving = p.aic - p.calls * (mid.aic / mid.calls);

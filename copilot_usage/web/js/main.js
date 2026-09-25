@@ -14,14 +14,15 @@ import { initSettings } from "./theme.js";
 import { hideTip } from "./tooltip.js";
 
 function renderHeadings() {
-  const { noun, what } = MEASURE_TEXT[state.measure], byCalls = state.measure === "calls";
-  byId("models-title").textContent = byCalls ? "Calls by model" : "Spend by model";
+  const { noun, what } = MEASURE_TEXT[state.measure], byAic = state.measure === "aic";
+  const title = noun[0].toUpperCase() + noun.slice(1);
+  byId("models-title").textContent = `${title} by model`;
   byId("models-sub").textContent = `${what}, colored by tier. Click a model to filter by it.`;
-  byId("breakdown-title").textContent = byCalls ? "Where the calls go" : "Where the spend goes";
+  byId("breakdown-title").textContent = `Where the ${noun} go${byAic ? "es" : ""}`;
   byId("breakdown-sub").textContent = `${what} by each dimension. Click a bar to filter by it.`
-    + (byCalls ? "" : " Token type splits the bill by what was charged for.");
-  byId("tokens-block").hidden = byCalls;
-  byId("heatmap-title").textContent = byCalls ? "When the calls happen" : "When the spend happens";
+    + (byAic ? " Token type splits the bill by what was charged for." : "");
+  byId("tokens-block").hidden = !byAic;
+  byId("heatmap-title").textContent = `When the ${noun} happen${byAic ? "s" : ""}`;
   byId("heatmap-sub").textContent = `${what} by weekday and hour of day, local time.`;
 }
 
@@ -47,6 +48,7 @@ function renderPage() {
   renderBars("models", "model", dimEntries(dim("model"), rows, modelColor), measured, 8);
   renderDonut("mix-aic", byModel, "aic");
   renderDonut("mix-calls", byModel, "calls");
+  renderDonut("mix-prompts", byModel, "prompts");
   for (const id of ["repo", "branch", "effort", "initiator", "endpoint", "finish", "host"])
     renderBars("by-" + id, dim(id).label, dimEntries(dim(id), rows), measured);
   renderClients(rows, measured);

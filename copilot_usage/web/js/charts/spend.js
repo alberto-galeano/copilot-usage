@@ -21,9 +21,9 @@ export function renderSpend(rows, days) {
   const host = byId("daily");
   const { measure, server, range } = state;
   const { hourly, slotOf, slots } = timeSlots(days);
-  const byCalls = measure === "calls", { unit, noun, what } = MEASURE_TEXT[measure];
+  const byAic = measure === "aic", { unit, noun, what } = MEASURE_TEXT[measure];
   byId("daily-title").textContent = `${hourly ? "Hourly" : "Daily"} ${noun} by tier`;
-  const price = byCalls ? "" : " 1 AIC = $0.01.";
+  const price = byAic ? " 1 AIC = $0.01." : "";
   byId("daily-sub").textContent = hourly
     ? `${what} per hour on ${shortDay(days[0])}.${price}`
     : `${what} per day.${price} Click a day to see it by hour.`;
@@ -35,13 +35,13 @@ export function renderSpend(rows, days) {
   for (const v of bySlot.values()) for (const t of TIERS) v[t] = Math.max(0, v[t]);
 
   const now = new Date();
-  const dailyBudget = server.budget && range === "month" && !hourly && !byCalls
+  const dailyBudget = server.budget && range === "month" && !hourly && byAic
     ? server.budget / new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() : 0;
   const top = niceMax(Math.max(dailyBudget, ...[...bySlot.values()].map(v => TIERS.reduce((a, t) => a + v[t], 0))));
   const y = v => m.top + plotH - (v / top) * plotH;
   const slotW = plotW / slots.length;
   const barW = Math.max(2, Math.min(24, slotW - 2));
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": `${byCalls ? "Calls" : "Spend"} by tier over time` });
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "group", "aria-label": `${what} by tier over time` });
 
   for (let i = 0; i <= 4; i++) {
     const v = (top / 4) * i;

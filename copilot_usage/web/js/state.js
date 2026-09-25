@@ -1,4 +1,4 @@
-import { RANGES, TIER_LABEL } from "./constants.js";
+import { MEASURE_OPTIONS, RANGES, TIER_LABEL } from "./constants.js";
 
 export const state = {
   data: null, server: {}, version: "",
@@ -35,7 +35,7 @@ export function readState(text) {
   if (range !== "custom" && !RANGES.some(r => r.id === range)) range = "month";
   state.range = range;
   state.custom = { from: params.get("from") || "", to: params.get("to") || "" };
-  state.measure = params.get("by") === "calls" ? "calls" : "aic";
+  state.measure = MEASURE_OPTIONS.some(([id]) => id === params.get("by")) ? params.get("by") : "aic";
   state.picked = {};
   for (const d of DIMS) if (params.get(d.id)) state.picked[d.id] = params.get(d.id);
 }

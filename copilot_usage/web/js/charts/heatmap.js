@@ -9,7 +9,7 @@ export function renderHeatmap(rows) {
   const { measure } = state;
   const host = byId("heatmap");
   const cells = sumBy(rows, r => r.weekday * 24 + r.hour);
-  const { unit } = MEASURE_TEXT[measure], other = measure === "calls" ? "aic" : "calls";
+  const { unit } = MEASURE_TEXT[measure], other = measure === "aic" ? "calls" : "aic";
   const max = Math.max(0, ...[...cells.values()].map(v => v[measure]));
   const W = host.clientWidth || 600, left = 36, topRoom = 16, gap = 2;
   const size = (W - left) / 24, H = topRoom + size * 7;

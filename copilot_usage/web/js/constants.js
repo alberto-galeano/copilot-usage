@@ -2,10 +2,11 @@ import { addDays } from "./format.js";
 
 export const TIERS = ["high", "medium", "low"];
 export const TIER_LABEL = { high: "High", medium: "Medium", low: "Low" };
-export const MEASURE_OPTIONS = [["aic", "Spend"], ["calls", "Calls"]];
+export const MEASURE_OPTIONS = [["aic", "Spend"], ["calls", "Calls"], ["prompts", "Prompts"]];
 export const MEASURE_TEXT = {
   aic: { unit: "AIC", noun: "spend", what: "AI credits" },
   calls: { unit: "calls", noun: "calls", what: "Model calls" },
+  prompts: { unit: "prompts", noun: "prompts", what: "Prompts you sent" },
 };
 export const MIX_SLICES = 6;
 export const RANGES = [
